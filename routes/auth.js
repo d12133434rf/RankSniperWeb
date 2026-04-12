@@ -3,57 +3,29 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: 587,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+// Try to send email — fails silently if SMTP not configured
+async function sendEmail(to, subject, html) {
+  try {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.log('SMTP not configured, skipping email to:', to);
+      return false;
     }
-  });
-}
-
-async function sendVerificationEmail(email, token) {
-  const url = `${process.env.FRONTEND_URL}/verify?token=${token}`;
-  const transporter = getTransporter();
-  await transporter.sendMail({
-    from: `"RankSniper" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: 'Verify your RankSniper account',
-    html: `
-      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;">
-        <h2 style="color:#3b82f6;">Welcome to RankSniper!</h2>
-        <p>Click the button below to verify your email address.</p>
-        <a href="${url}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Verify Email</a>
-        <p style="color:#6b7280;font-size:13px;">Or copy this link: ${url}</p>
-        <p style="color:#6b7280;font-size:13px;">This link expires in 24 hours.</p>
-      </div>
-    `
-  });
-}
-
-async function sendPasswordResetEmail(email, token) {
-  const url = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-  const transporter = getTransporter();
-  await transporter.sendMail({
-    from: `"RankSniper" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: 'Reset your RankSniper password',
-    html: `
-      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;">
-        <h2 style="color:#3b82f6;">Password Reset</h2>
-        <p>Click the button below to reset your password. This link expires in 1 hour.</p>
-        <a href="${url}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Reset Password</a>
-        <p style="color:#6b7280;font-size:13px;">If you didn't request this, ignore this email.</p>
-      </div>
-    `
-  });
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: 587,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    await transporter.sendMail({ from: `"RankSniper" <${process.env.SMTP_USER}>`, to, subject, html });
+    return true;
+  } catch (e) {
+    console.error('Email send error:', e.message);
+    return false;
+  }
 }
 
 // POST /api/auth/signup
@@ -61,6 +33,7 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password, businessName } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
     const { data: existing } = await supabase.from('users').select('id').eq('email', email.toLowerCase()).single();
     if (existing) return res.status(400).json({ error: 'Email already registered' });
@@ -74,20 +47,29 @@ router.post('/signup', async (req, res) => {
       business_name: businessName || '',
       plan: 'free',
       usage_count: 0,
-      email_verified: false,
+      email_verified: true, // auto-verify for now until SMTP is configured
       verification_token: verificationToken,
       created_at: new Date().toISOString()
     }).select().single();
 
     if (error) throw error;
 
-    // Send verification email
-    try { await sendVerificationEmail(email, verificationToken); } catch (e) { console.error('Email error:', e); }
+    // Try to send welcome email
+    await sendEmail(email, 'Welcome to RankSniper!', `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;">
+        <h2 style="color:#3b82f6;">Welcome to RankSniper!</h2>
+        <p>Your account has been created successfully. You can now log in and start responding to reviews with AI.</p>
+        <a href="${process.env.FRONTEND_URL || 'https://ranksniperweb-production.up.railway.app'}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Open RankSniper</a>
+        <p style="color:#6b7280;font-size:13px;">Questions? Reply to this email or contact contactranksniper@gmail.com</p>
+      </div>
+    `);
 
-    res.json({ success: true, message: 'Account created! Check your email to verify your account.' });
+    // Auto-login after signup
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    res.json({ success: true, token, user: { id: user.id, email: user.email, plan: user.plan, businessName: user.business_name }, message: 'Account created successfully!' });
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(500).json({ error: 'Signup failed' });
+    res.status(500).json({ error: 'Signup failed. Please try again.' });
   }
 });
 
@@ -105,7 +87,7 @@ router.get('/verify', async (req, res) => {
     if (error || !user) return res.status(400).json({ error: 'Invalid or expired token' });
 
     const jwtToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${jwtToken}`);
+    res.redirect(`${process.env.FRONTEND_URL || ''}/?token=${jwtToken}&verified=true`);
   } catch (err) {
     res.status(500).json({ error: 'Verification failed' });
   }
@@ -123,12 +105,11 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-    if (!user.email_verified) return res.status(401).json({ error: 'Please verify your email before logging in.' });
-
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, user: { id: user.id, email: user.email, plan: user.plan, businessName: user.business_name } });
   } catch (err) {
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed. Please try again.' });
   }
 });
 
@@ -139,20 +120,26 @@ router.post('/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Email required' });
 
     const { data: user } = await supabase.from('users').select('id').eq('email', email.toLowerCase()).single();
-
-    // Always return success to prevent email enumeration
     if (!user) return res.json({ success: true, message: 'If that email exists, you will receive a reset link.' });
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 3600000).toISOString(); // 1 hour
+    const expires = new Date(Date.now() + 3600000).toISOString();
 
     await supabase.from('users').update({ reset_token: resetToken, reset_token_expires: expires }).eq('id', user.id);
 
-    try { await sendPasswordResetEmail(email, resetToken); } catch (e) { console.error('Email error:', e); }
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://ranksniperweb-production.up.railway.app'}/?reset_token=${resetToken}`;
+    const sent = await sendEmail(email, 'Reset your RankSniper password', `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto;">
+        <h2 style="color:#3b82f6;">Password Reset</h2>
+        <p>Click the button below to reset your password. This link expires in 1 hour.</p>
+        <a href="${resetUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0;">Reset Password</a>
+        <p style="color:#6b7280;font-size:13px;">If you didn't request this, ignore this email.</p>
+      </div>
+    `);
 
-    res.json({ success: true, message: 'If that email exists, you will receive a reset link.' });
+    res.json({ success: true, message: sent ? 'Reset link sent! Check your email.' : 'Reset link created. Please contact contactranksniper@gmail.com if you need help.' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to send reset email' });
+    res.status(500).json({ error: 'Failed to process request' });
   }
 });
 
@@ -172,7 +159,7 @@ router.post('/reset-password', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     await supabase.from('users').update({ password: hashedPassword, reset_token: null, reset_token_expires: null }).eq('id', user.id);
 
-    res.json({ success: true, message: 'Password reset successfully.' });
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reset password' });
   }

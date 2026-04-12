@@ -556,7 +556,7 @@
       <div class="contact-info fade-up">
         <h3>Get in touch</h3>
         <p>Have a question about RankSniper? Want to report a bug or request a feature? We respond to every message within 24 hours.</p>
-        <div class="contact-detail"><span>📧</span> hello@ranksniper.io</div>
+        <div class="contact-detail"><span>📧</span> contactranksniper@gmail.com</div>
         <div class="contact-detail"><span>💬</span> Average response time: under 24 hours</div>
         <div class="contact-detail"><span>🕐</span> Support hours: Mon–Fri, 9am–6pm PST</div>
       </div>
@@ -585,6 +585,8 @@
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="#faq">FAQ</a></li>
         <li><a href="#contact">Contact</a></li>
+        <li><a href="/terms.html">Terms</a></li>
+        <li><a href="/privacy.html">Privacy</a></li>
       </ul>
       <div class="footer-copy">© 2026 RankSniper</div>
     </div>
@@ -636,7 +638,14 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (res.ok) {
-      showMsg('signup-msg', '✓ Account created! Check your email to verify your account.', 'success');
+      if (data.token) {
+        localStorage.setItem('rs_token', data.token);
+        showMsg('signup-msg', '✓ Account created! You are now logged in.', 'success');
+        setTimeout(() => switchTab('login'), 2000);
+      } else {
+        showMsg('signup-msg', data.message || '✓ Account created! You can now log in.', 'success');
+        setTimeout(() => switchTab('login'), 2000);
+      }
     } else {
       showMsg('signup-msg', data.error || 'Signup failed', 'error');
     }
