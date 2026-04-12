@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RankSniper — AI Review Responder for Google</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -18,915 +19,269 @@
     --muted: #6b7280;
     --subtle: #94a3b8;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.6; overflow-x: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    overflow-x: hidden;
-  }
-
-  /* Background grid */
   body::before {
     content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
     background-size: 60px 60px;
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
+  .orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.12; }
+  .orb1 { width: 500px; height: 500px; background: #3b82f6; top: -150px; right: -100px; }
+  .orb2 { width: 350px; height: 350px; background: #6366f1; bottom: 200px; left: -100px; }
 
-  /* Glow orbs */
-  .orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(120px);
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.15;
-  }
-  .orb1 { width: 600px; height: 600px; background: #3b82f6; top: -200px; right: -100px; }
-  .orb2 { width: 400px; height: 400px; background: #6366f1; bottom: 200px; left: -100px; }
-
-  /* NAV */
   nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 60px;
-    background: rgba(5,8,16,0.8);
-    backdrop-filter: blur(20px);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 40px;
+    background: rgba(5,8,16,0.85); backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
   }
-
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 20px;
-    color: var(--text);
-    text-decoration: none;
-  }
-
-  .nav-logo-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 800;
-    color: #fff;
-  }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 36px;
-    list-style: none;
-  }
-
-  .nav-links a {
-    color: var(--subtle);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; }
+  .nav-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
+  .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+  .nav-links a { color: var(--subtle); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
   .nav-links a:hover { color: var(--text); }
-
-  .nav-cta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .btn-ghost {
-    padding: 9px 20px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--subtle);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    cursor: pointer;
-    background: none;
-    font-family: inherit;
-  }
+  .nav-cta { display: flex; align-items: center; gap: 10px; }
+  .btn-ghost { padding: 8px 18px; border: 1px solid var(--border); border-radius: 8px; color: var(--subtle); text-decoration: none; font-size: 14px; font-weight: 500; transition: all 0.2s; cursor: pointer; background: none; font-family: inherit; }
   .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-
-  .btn-primary {
-    padding: 9px 20px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: opacity 0.2s;
-  }
+  .btn-primary { padding: 8px 18px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
   .btn-primary:hover { opacity: 0.9; }
 
-  /* SECTIONS */
   section { position: relative; z-index: 1; }
-
-  .container { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
 
   /* HERO */
-  .hero {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    padding: 120px 0 80px;
-  }
-
-  .hero-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 40px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(59,130,246,0.1);
-    border: 1px solid rgba(59,130,246,0.3);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 24px;
-  }
-
+  .hero { min-height: 100vh; display: flex; align-items: center; padding: 100px 0 60px; }
+  .hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 100px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 20px; }
   .hero-badge span { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
-
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
-
-  .hero h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 58px;
-    font-weight: 800;
-    line-height: 1.05;
-    margin-bottom: 24px;
-    letter-spacing: -1px;
-  }
-
-  .hero h1 .gradient {
-    background: linear-gradient(135deg, #60a5fa, #818cf8, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .hero-sub {
-    font-size: 18px;
-    color: var(--subtle);
-    line-height: 1.7;
-    margin-bottom: 40px;
-    font-weight: 300;
-  }
-
-  .hero-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .btn-large {
-    padding: 14px 28px;
-    font-size: 16px;
-    border-radius: 10px;
-  }
-
-  .hero-note {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 16px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
+  .hero h1 { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; line-height: 1.05; margin-bottom: 20px; letter-spacing: -1px; }
+  .hero h1 .gradient { background: linear-gradient(135deg, #60a5fa, #818cf8, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: 17px; color: var(--subtle); line-height: 1.7; margin-bottom: 32px; font-weight: 300; }
+  .hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn-large { padding: 13px 26px; font-size: 15px; border-radius: 10px; }
+  .hero-note { font-size: 12px; color: var(--muted); margin-top: 14px; display: flex; align-items: center; gap: 6px; }
   .hero-note::before { content: '✓'; color: var(--green); font-weight: 700; }
 
-  /* Hero card mockup */
-  .hero-visual {
-    position: relative;
-  }
-
-  .mockup-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .mockup-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent);
-  }
-
-  .mockup-review {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .mockup-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #3b82f6);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-  }
-
-  .mockup-stars { color: #f59e0b; font-size: 13px; margin-bottom: 4px; }
-  .mockup-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .mockup-text { font-size: 12px; color: var(--subtle); line-height: 1.5; }
-
-  .mockup-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 7px;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 16px;
-  }
-
-  .mockup-response {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-
-  .mockup-response-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .mockup-logo { font-size: 12px; font-weight: 700; color: var(--text); }
-
-  .mockup-score {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--green);
-    background: rgba(34,197,94,0.1);
-    border: 1px solid rgba(34,197,94,0.3);
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
-
-  .mockup-response-text {
-    font-size: 11px;
-    color: var(--subtle);
-    line-height: 1.6;
-    margin-bottom: 10px;
-  }
-
-  .mockup-actions {
-    display: flex;
-    gap: 6px;
-  }
-
-  .mockup-action-btn {
-    font-size: 10px;
-    padding: 5px 10px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    color: var(--subtle);
-    background: none;
-    cursor: pointer;
-  }
-
+  /* Mockup */
+  .mockup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; position: relative; overflow: hidden; }
+  .mockup-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent); }
+  .mockup-review { display: flex; gap: 10px; margin-bottom: 14px; }
+  .mockup-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #3b82f6); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .mockup-stars { color: #f59e0b; font-size: 12px; margin-bottom: 3px; }
+  .mockup-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .mockup-text { font-size: 11px; color: var(--subtle); line-height: 1.5; }
+  .mockup-btn { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 6px; padding: 7px 12px; font-size: 11px; font-weight: 600; color: #fff; margin-bottom: 14px; cursor: pointer; }
+  .mockup-response { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .mockup-response-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .mockup-logo { font-size: 11px; font-weight: 700; color: var(--text); }
+  .mockup-score { font-size: 10px; font-weight: 700; color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); padding: 2px 7px; border-radius: 20px; }
+  .mockup-response-text { font-size: 10px; color: var(--subtle); line-height: 1.6; margin-bottom: 10px; }
+  .mockup-actions { display: flex; gap: 5px; }
+  .mockup-action-btn { font-size: 10px; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); color: var(--subtle); background: none; cursor: pointer; }
   .mockup-action-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-  .mockup-sms {
-    margin-top: 16px;
-    background: rgba(34,197,94,0.05);
-    border: 1px solid rgba(34,197,94,0.2);
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .mockup-sms-icon { font-size: 18px; }
-  .mockup-sms-text { font-size: 11px; color: var(--subtle); }
-  .mockup-sms-text strong { color: var(--green); display: block; font-size: 12px; margin-bottom: 2px; }
+  .mockup-sms { margin-top: 12px; background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.2); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 8px; }
+  .mockup-sms-icon { font-size: 16px; }
+  .mockup-sms-text { font-size: 10px; color: var(--subtle); }
+  .mockup-sms-text strong { color: var(--green); display: block; font-size: 11px; margin-bottom: 1px; }
 
   /* STATS */
-  .stats {
-    padding: 60px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-  }
-
-  .stat-item {
-    padding: 20px 40px;
-    border-right: 1px solid var(--border);
-    text-align: center;
-  }
-
+  .stats { padding: 50px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .stat-item { padding: 16px 32px; border-right: 1px solid var(--border); text-align: center; }
   .stat-item:last-child { border-right: none; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: block; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--muted); }
 
-  .stat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 36px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #60a5fa, #818cf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: block;
-    margin-bottom: 4px;
-  }
-
-  .stat-label { font-size: 13px; color: var(--muted); }
+  /* SECTIONS */
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 14px; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800; line-height: 1.1; margin-bottom: 14px; letter-spacing: -0.5px; }
+  .section-sub { font-size: 16px; color: var(--subtle); max-width: 540px; line-height: 1.7; font-weight: 300; }
 
   /* HOW IT WORKS */
-  .how { padding: 120px 0; }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 42px;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 16px;
-    letter-spacing: -0.5px;
-  }
-
-  .section-sub {
-    font-size: 17px;
-    color: var(--subtle);
-    max-width: 560px;
-    line-height: 1.7;
-    font-weight: 300;
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-top: 60px;
-  }
-
-  .step-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    position: relative;
-    transition: border-color 0.3s;
-  }
-
+  .how { padding: 100px 0; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 50px; }
+  .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: border-color 0.3s; }
   .step-card:hover { border-color: rgba(99,102,241,0.4); }
-
-  .step-num {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    color: #fff;
-    margin-bottom: 16px;
-  }
-
-  .step-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--text);
-  }
-
+  .step-num { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: #fff; margin-bottom: 14px; }
+  .step-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
   .step-desc { font-size: 13px; color: var(--subtle); line-height: 1.6; }
 
-  /* SEO SECTION */
-  .seo { padding: 120px 0; background: var(--surface); }
-
-  .seo-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .seo-points { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
-
-  .seo-point {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .seo-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-
+  /* SEO */
+  .seo { padding: 100px 0; background: var(--surface); }
+  .seo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+  .seo-points { margin-top: 36px; display: flex; flex-direction: column; gap: 18px; }
+  .seo-point { display: flex; gap: 14px; align-items: flex-start; }
+  .seo-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
   .seo-icon.blue { background: rgba(59,130,246,0.1); }
   .seo-icon.green { background: rgba(34,197,94,0.1); }
   .seo-icon.purple { background: rgba(99,102,241,0.1); }
   .seo-icon.orange { background: rgba(251,146,60,0.1); }
-
-  .seo-point-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .seo-point-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
   .seo-point-desc { font-size: 13px; color: var(--subtle); line-height: 1.6; }
-
-  /* Ranking visual */
-  .ranking-visual {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-  }
-
-  .ranking-header { font-size: 13px; color: var(--muted); margin-bottom: 20px; font-weight: 500; }
-
-  .ranking-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  .ranking-label { font-size: 12px; color: var(--subtle); width: 130px; flex-shrink: 0; }
-
-  .ranking-track {
-    flex: 1;
-    height: 8px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .ranking-fill {
-    height: 100%;
-    border-radius: 4px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    transition: width 1s ease;
-  }
-
+  .ranking-visual { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .ranking-header { font-size: 12px; color: var(--muted); margin-bottom: 18px; font-weight: 500; }
+  .ranking-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ranking-label { font-size: 12px; color: var(--subtle); width: 120px; flex-shrink: 0; }
+  .ranking-track { flex: 1; height: 7px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+  .ranking-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
   .ranking-val { font-size: 12px; font-weight: 600; color: var(--text); width: 30px; text-align: right; }
+  .ranking-trend { margin-top: 18px; padding: 12px; background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.15); border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--green); font-weight: 500; }
 
-  .ranking-trend {
-    margin-top: 20px;
-    padding: 14px;
-    background: rgba(34,197,94,0.05);
-    border: 1px solid rgba(34,197,94,0.15);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--green);
-    font-weight: 500;
-  }
-
-  /* SMS SECTION */
-  .sms-section { padding: 120px 0; }
-
-  .sms-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .phone-mockup {
-    background: #1a1a2e;
-    border: 2px solid #2a2a4a;
-    border-radius: 40px;
-    padding: 40px 30px;
-    max-width: 280px;
-    margin: 0 auto;
-    position: relative;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-  }
-
-  .phone-notch {
-    width: 80px; height: 8px;
-    background: #0a0a1a;
-    border-radius: 4px;
-    margin: 0 auto 30px;
-  }
-
-  .sms-bubble {
-    background: #1a472a;
-    border-radius: 16px 16px 4px 16px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    font-size: 13px;
-    color: #86efac;
-    line-height: 1.5;
-  }
-
-  .sms-bubble strong { color: #fff; display: block; margin-bottom: 4px; }
-
-  .sms-time { font-size: 10px; color: var(--muted); text-align: right; margin-bottom: 16px; }
-
-  .sms-reply {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 16px 16px 16px 4px;
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--subtle);
-    line-height: 1.5;
-  }
+  /* SMS */
+  .sms-section { padding: 100px 0; }
+  .sms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+  .phone-mockup { background: #1a1a2e; border: 2px solid #2a2a4a; border-radius: 36px; padding: 36px 28px; max-width: 260px; margin: 0 auto; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+  .phone-notch { width: 70px; height: 7px; background: #0a0a1a; border-radius: 4px; margin: 0 auto 26px; }
+  .sms-bubble { background: #1a472a; border-radius: 14px 14px 4px 14px; padding: 12px 14px; margin-bottom: 8px; font-size: 12px; color: #86efac; line-height: 1.5; }
+  .sms-bubble strong { color: #fff; display: block; margin-bottom: 3px; }
+  .sms-time { font-size: 10px; color: var(--muted); text-align: right; margin-bottom: 14px; }
+  .sms-reply { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 12px 14px; font-size: 12px; color: var(--subtle); line-height: 1.5; }
 
   /* PRICING */
-  .pricing { padding: 120px 0; }
-
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    max-width: 800px;
-    margin: 60px auto 0;
-  }
-
-  .pricing-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px;
-    position: relative;
-    transition: border-color 0.3s;
-  }
-
-  .pricing-card.featured {
-    border-color: rgba(99,102,241,0.5);
-    background: linear-gradient(135deg, rgba(99,102,241,0.05), var(--surface));
-  }
-
-  .pricing-card.featured::before {
-    content: 'Most Popular';
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 14px;
-    border-radius: 100px;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-
-  .pricing-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-  .pricing-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-
-  .pricing-price {
-    font-family: 'Syne', sans-serif;
-    font-size: 48px;
-    font-weight: 800;
-    margin-bottom: 4px;
-    line-height: 1;
-  }
-
-  .pricing-price sup { font-size: 24px; vertical-align: top; margin-top: 8px; }
-  .pricing-period { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
-
-  .pricing-features { list-style: none; margin-bottom: 28px; }
-
-  .pricing-features li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: var(--subtle);
-    margin-bottom: 12px;
-  }
-
+  .pricing { padding: 100px 0; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 760px; margin: 50px auto 0; }
+  .pricing-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 32px; position: relative; }
+  .pricing-card.featured { border-color: rgba(99,102,241,0.5); background: linear-gradient(135deg, rgba(99,102,241,0.05), var(--surface)); }
+  .pricing-card.featured::before { content: 'Most Popular'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 12px; border-radius: 100px; letter-spacing: 0.5px; white-space: nowrap; }
+  .pricing-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .pricing-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .pricing-price { font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 800; margin-bottom: 3px; line-height: 1; }
+  .pricing-price sup { font-size: 22px; vertical-align: top; margin-top: 8px; }
+  .pricing-period { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .pricing-features { list-style: none; margin-bottom: 24px; }
+  .pricing-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); margin-bottom: 10px; }
   .pricing-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
-
-  .pricing-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s;
-    text-align: center;
-    text-decoration: none;
-    display: block;
-  }
-
-  .pricing-btn.outline {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text);
-  }
+  .pricing-btn { width: 100%; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center; text-decoration: none; display: block; }
+  .pricing-btn.outline { background: none; border: 1px solid var(--border); color: var(--text); }
   .pricing-btn.outline:hover { border-color: rgba(255,255,255,0.3); }
-
-  .pricing-btn.filled {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: #fff;
-  }
+  .pricing-btn.filled { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; }
   .pricing-btn.filled:hover { opacity: 0.9; }
 
   /* FAQ */
-  .faq { padding: 120px 0; background: var(--surface); }
-
-  .faq-list {
-    max-width: 700px;
-    margin: 60px auto 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .faq-item {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
+  .faq { padding: 100px 0; background: var(--surface); }
+  .faq-list { max-width: 680px; margin: 50px auto 0; display: flex; flex-direction: column; gap: 10px; }
+  .faq-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
   .faq-item:hover { border-color: rgba(99,102,241,0.3); }
-
-  .faq-q {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-    font-family: inherit;
-    gap: 16px;
-  }
-
-  .faq-arrow {
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.3s;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
+  .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; background: none; border: none; color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; text-align: left; font-family: inherit; gap: 14px; }
+  .faq-arrow { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.3s; font-size: 11px; color: var(--muted); }
   .faq-item.open .faq-arrow { transform: rotate(45deg); }
+  .faq-a { padding: 0 22px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; font-size: 13px; color: var(--subtle); line-height: 1.7; }
+  .faq-item.open .faq-a { max-height: 300px; padding: 0 22px 18px; }
 
-  .faq-a {
-    padding: 0 24px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s;
-    font-size: 14px;
-    color: var(--subtle);
-    line-height: 1.7;
-  }
-
-  .faq-item.open .faq-a { max-height: 300px; padding: 0 24px 20px; }
-
-  /* LOGIN */
-  .login-section { padding: 120px 0; }
-
-  .login-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 48px;
-    max-width: 440px;
-    margin: 60px auto 0;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .login-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-  }
-
-  .login-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-
-  .login-sub { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 32px; }
-
-  .form-group { margin-bottom: 16px; }
-
-  .form-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--subtle);
-    margin-bottom: 8px;
-  }
-
-  .form-input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 12px 14px;
-    font-size: 14px;
-    outline: none;
-    font-family: inherit;
-    transition: border-color 0.2s;
-  }
-
+  /* AUTH FORMS */
+  .auth-section { padding: 100px 0; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; max-width: 420px; margin: 50px auto 0; position: relative; overflow: hidden; }
+  .auth-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 28px; background: var(--bg); border-radius: 10px; padding: 4px; }
+  .auth-tab { flex: 1; padding: 8px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; color: var(--muted); transition: all 0.2s; border: none; background: none; font-family: inherit; }
+  .auth-tab.active { background: var(--surface2); color: var(--text); }
+  .auth-form { display: none; }
+  .auth-form.active { display: block; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--subtle); margin-bottom: 7px; }
+  .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 11px 13px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; }
   .form-input:focus { border-color: var(--accent); }
-
   .form-input::placeholder { color: var(--muted); }
+  .auth-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 6px; transition: opacity 0.2s; }
+  .auth-btn:hover { opacity: 0.9; }
+  .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .auth-msg { text-align: center; font-size: 13px; margin-top: 14px; padding: 10px; border-radius: 8px; display: none; }
+  .auth-msg.success { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .auth-msg.error { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+  .forgot-link { text-align: right; margin-top: -8px; margin-bottom: 14px; }
+  .forgot-link a { font-size: 12px; color: var(--accent); text-decoration: none; cursor: pointer; }
 
-  .login-btn {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    margin-top: 8px;
-    transition: opacity 0.2s;
-  }
-
-  .login-btn:hover { opacity: 0.9; }
-
-  .login-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 20px 0;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .login-divider::before, .login-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .login-switch {
-    text-align: center;
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 20px;
-  }
-
-  .login-switch a { color: var(--accent); text-decoration: none; }
+  /* CONTACT */
+  .contact-section { padding: 100px 0; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; margin-top: 50px; }
+  .contact-info h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 14px; }
+  .contact-info p { font-size: 15px; color: var(--subtle); line-height: 1.7; margin-bottom: 24px; }
+  .contact-detail { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; font-size: 14px; color: var(--subtle); }
+  .contact-detail span { width: 36px; height: 36px; background: rgba(59,130,246,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .contact-form { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+  .contact-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 6px; transition: opacity 0.2s; }
+  .contact-btn:hover { opacity: 0.9; }
+  .contact-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  textarea.form-input { resize: vertical; min-height: 120px; }
 
   /* FOOTER */
-  footer {
-    padding: 60px 0 40px;
-    border-top: 1px solid var(--border);
-  }
-
-  .footer-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .footer-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 18px;
-    color: var(--text);
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 28px;
-    list-style: none;
-  }
-
+  footer { padding: 50px 0 32px; border-top: 1px solid var(--border); }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; color: var(--text); }
+  .footer-links { display: flex; gap: 24px; list-style: none; }
   .footer-links a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color 0.2s; }
   .footer-links a:hover { color: var(--text); }
-
   .footer-copy { font-size: 12px; color: var(--muted); }
 
-  /* ANIMATIONS */
-  .fade-up {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-
+  .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .fade-up.visible { opacity: 1; transform: translateY(0); }
 
   /* MOBILE */
   @media (max-width: 768px) {
-    nav { padding: 16px 24px; }
+    nav { padding: 14px 20px; }
     .nav-links { display: none; }
-    .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-    .hero h1 { font-size: 38px; }
+    .nav-cta .btn-ghost { display: none; }
+
+    .hero { padding: 90px 0 50px; }
+    .hero-inner { grid-template-columns: 1fr; gap: 36px; padding: 0 20px; }
+    .hero h1 { font-size: 34px; letter-spacing: -0.5px; }
+    .hero-sub { font-size: 15px; }
     .hero-visual { display: none; }
+    .hero-actions { flex-direction: column; align-items: flex-start; }
+    .btn-large { width: 100%; text-align: center; }
+
+    .container { padding: 0 20px; }
+    .section-title { font-size: 28px; }
+    .section-sub { font-size: 15px; }
+
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
-    .steps { grid-template-columns: 1fr; }
-    .seo-grid, .sms-grid, .pricing-grid { grid-template-columns: 1fr; }
-    .container { padding: 0 24px; }
-    .section-title { font-size: 30px; }
-    .login-card { padding: 28px 24px; margin: 40px 24px 0; }
+    .stat-item { border-right: none; border-bottom: 1px solid var(--border); padding: 14px 20px; }
+    .stat-item:nth-child(2n) { border-left: 1px solid var(--border); }
+    .stat-num { font-size: 26px; }
+
+    .how { padding: 70px 0; }
+    .steps { grid-template-columns: 1fr; gap: 14px; margin-top: 36px; }
+
+    .seo { padding: 70px 0; }
+    .seo-grid { grid-template-columns: 1fr; gap: 40px; }
+    .ranking-visual { display: none; }
+
+    .sms-section { padding: 70px 0; }
+    .sms-grid { grid-template-columns: 1fr; gap: 40px; }
+    .phone-mockup { max-width: 220px; }
+
+    .pricing { padding: 70px 0; }
+    .pricing-grid { grid-template-columns: 1fr; max-width: 100%; }
+
+    .faq { padding: 70px 0; }
+    .faq-q { font-size: 13px; padding: 16px 18px; }
+
+    .auth-section { padding: 70px 0; }
+    .auth-card { margin: 36px 20px 0; padding: 28px 22px; }
+
+    .contact-section { padding: 70px 0; }
+    .contact-grid { grid-template-columns: 1fr; gap: 36px; }
+
+    footer { padding: 40px 0 24px; }
+    .footer-inner { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .footer-links { flex-wrap: wrap; gap: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 28px; }
+    .section-title { font-size: 24px; }
+    .pricing-price { font-size: 36px; }
   }
 </style>
 </head>
 <body>
-
 <div class="orb orb1"></div>
 <div class="orb orb2"></div>
 
@@ -944,7 +299,7 @@
     <li><a href="#faq">FAQ</a></li>
   </ul>
   <div class="nav-cta">
-    <a href="#login" class="btn-ghost">Log In</a>
+    <a href="#auth" class="btn-ghost" id="nav-login">Log In</a>
     <a href="#pricing" class="btn-primary">Get Started Free</a>
   </div>
 </nav>
@@ -955,9 +310,9 @@
     <div>
       <div class="hero-badge"><span></span> AI-Powered Review Management</div>
       <h1>Respond to reviews.<br><span class="gradient">Rank higher</span><br>on Google.</h1>
-      <p class="hero-sub">RankSniper injects an AI button directly into your Google Business Profile. One click generates a personalized, SEO-optimized reply — in seconds.</p>
+      <p class="hero-sub">RankSniper injects an AI button directly into your Google Business Profile. One click generates a personalized, SEO-optimized reply in seconds.</p>
       <div class="hero-actions">
-        <a href="#pricing" class="btn-primary btn-large">Start for Free</a>
+        <a href="#auth" class="btn-primary btn-large">Start for Free</a>
         <a href="#how" class="btn-ghost btn-large">See How It Works</a>
       </div>
       <p class="hero-note">No credit card required. Works on Chrome.</p>
@@ -1001,22 +356,10 @@
 <section class="stats">
   <div class="container">
     <div class="stats-grid">
-      <div class="stat-item fade-up">
-        <span class="stat-num">3x</span>
-        <span class="stat-label">Faster response time</span>
-      </div>
-      <div class="stat-item fade-up">
-        <span class="stat-num">94%</span>
-        <span class="stat-label">Average SEO score</span>
-      </div>
-      <div class="stat-item fade-up">
-        <span class="stat-num">10s</span>
-        <span class="stat-label">To respond to any review</span>
-      </div>
-      <div class="stat-item fade-up">
-        <span class="stat-num">100%</span>
-        <span class="stat-label">Google-compliant responses</span>
-      </div>
+      <div class="stat-item fade-up"><span class="stat-num">3x</span><span class="stat-label">Faster response time</span></div>
+      <div class="stat-item fade-up"><span class="stat-num">94%</span><span class="stat-label">Average SEO score</span></div>
+      <div class="stat-item fade-up"><span class="stat-num">10s</span><span class="stat-label">To respond to any review</span></div>
+      <div class="stat-item fade-up"><span class="stat-num">100%</span><span class="stat-label">Google-compliant responses</span></div>
     </div>
   </div>
 </section>
@@ -1027,109 +370,47 @@
     <div class="fade-up">
       <div class="section-label">How It Works</div>
       <h2 class="section-title">From review to reply<br>in 10 seconds flat.</h2>
-      <p class="section-sub">RankSniper sits directly inside Google Business Profile and Google Search. No switching tabs, no copying and pasting prompts.</p>
+      <p class="section-sub">RankSniper sits directly inside Google Business Profile and Google Search. No switching tabs, no copying prompts.</p>
     </div>
     <div class="steps">
-      <div class="step-card fade-up">
-        <div class="step-num">1</div>
-        <div class="step-title">Get notified instantly</div>
-        <div class="step-desc">The moment a new review comes in, you get a text message via SMS so you never miss one.</div>
-      </div>
-      <div class="step-card fade-up">
-        <div class="step-num">2</div>
-        <div class="step-title">Click Draft AI Response</div>
-        <div class="step-desc">A button appears right next to the Reply button on your Google Business Profile page.</div>
-      </div>
-      <div class="step-card fade-up">
-        <div class="step-num">3</div>
-        <div class="step-title">Refine if needed</div>
-        <div class="step-desc">Use the built-in chat to tweak the response. Say "make it shorter" or "sound more apologetic" and the AI rewrites it instantly.</div>
-      </div>
-      <div class="step-card fade-up">
-        <div class="step-num">4</div>
-        <div class="step-title">Post in one click</div>
-        <div class="step-desc">Copy the response and paste it into the Google reply box. Done in seconds.</div>
-      </div>
+      <div class="step-card fade-up"><div class="step-num">1</div><div class="step-title">Get notified instantly</div><div class="step-desc">The moment a new review comes in, you get a text message via SMS so you never miss one.</div></div>
+      <div class="step-card fade-up"><div class="step-num">2</div><div class="step-title">Click Draft AI Response</div><div class="step-desc">A button appears right next to the Reply button on your Google Business Profile page.</div></div>
+      <div class="step-card fade-up"><div class="step-num">3</div><div class="step-title">Refine if needed</div><div class="step-desc">Use the built-in chat to tweak the response. Say "make it shorter" or "sound more apologetic" and the AI rewrites it instantly.</div></div>
+      <div class="step-card fade-up"><div class="step-num">4</div><div class="step-title">Post in one click</div><div class="step-desc">Copy the response and paste it into the Google reply box. Done in seconds.</div></div>
     </div>
   </div>
 </section>
 
-<!-- SEO SECTION -->
+<!-- SEO -->
 <section class="seo" id="seo">
   <div class="container">
     <div class="seo-grid">
       <div class="fade-up">
         <div class="section-label">SEO Benefits</div>
-        <h2 class="section-title">Why responding to reviews makes you rank higher.</h2>
+        <h2 class="section-title">Why responding makes you rank higher.</h2>
         <div class="seo-points">
-          <div class="seo-point">
-            <div class="seo-icon blue">⚡</div>
-            <div>
-              <div class="seo-point-title">Response speed matters</div>
-              <div class="seo-point-desc">Google rewards businesses that respond quickly. The faster you reply, the stronger signal you send that your business is active and engaged — a direct ranking factor.</div>
-            </div>
-          </div>
-          <div class="seo-point">
-            <div class="seo-icon green">🔑</div>
-            <div>
-              <div class="seo-point-title">Keywords in responses</div>
-              <div class="seo-point-desc">When you mention your city, business name, and services in replies, Google indexes those keywords. RankSniper automatically includes your top keywords in every response.</div>
-            </div>
-          </div>
-          <div class="seo-point">
-            <div class="seo-icon purple">📈</div>
-            <div>
-              <div class="seo-point-title">Response rate = trust signal</div>
-              <div class="seo-point-desc">Businesses with a high response rate rank higher in the local pack. Google sees active review management as a sign of a legitimate, trustworthy business.</div>
-            </div>
-          </div>
-          <div class="seo-point">
-            <div class="seo-icon orange">⭐</div>
-            <div>
-              <div class="seo-point-title">Turn negatives into positives</div>
-              <div class="seo-point-desc">A well-crafted response to a bad review can convert unhappy customers and shows potential customers that you care. This drives more clicks and more reviews.</div>
-            </div>
-          </div>
+          <div class="seo-point"><div class="seo-icon blue">⚡</div><div><div class="seo-point-title">Response speed matters</div><div class="seo-point-desc">Google rewards businesses that respond quickly. The faster you reply, the stronger signal you send that your business is active — a direct ranking factor.</div></div></div>
+          <div class="seo-point"><div class="seo-icon green">🔑</div><div><div class="seo-point-title">Keywords in responses</div><div class="seo-point-desc">When you mention your city, business name, and services in replies, Google indexes those keywords and uses them to rank you for local search terms.</div></div></div>
+          <div class="seo-point"><div class="seo-icon purple">📈</div><div><div class="seo-point-title">Response rate = trust signal</div><div class="seo-point-desc">Businesses with a high response rate rank higher in local search. Google sees active review management as a sign of a trustworthy business.</div></div></div>
+          <div class="seo-point"><div class="seo-icon orange">⭐</div><div><div class="seo-point-title">Turn negatives into positives</div><div class="seo-point-desc">A well-crafted response to a bad review shows potential customers that you care, driving more clicks and more reviews.</div></div></div>
         </div>
       </div>
       <div class="fade-up">
         <div class="ranking-visual">
           <div class="ranking-header">Your Google ranking factors</div>
-          <div class="ranking-bar">
-            <span class="ranking-label">Response Rate</span>
-            <div class="ranking-track"><div class="ranking-fill" style="width:88%"></div></div>
-            <span class="ranking-val">88%</span>
-          </div>
-          <div class="ranking-bar">
-            <span class="ranking-label">Keyword Usage</span>
-            <div class="ranking-track"><div class="ranking-fill" style="width:94%"></div></div>
-            <span class="ranking-val">94%</span>
-          </div>
-          <div class="ranking-bar">
-            <span class="ranking-label">Response Speed</span>
-            <div class="ranking-track"><div class="ranking-fill" style="width:76%"></div></div>
-            <span class="ranking-val">76%</span>
-          </div>
-          <div class="ranking-bar">
-            <span class="ranking-label">Review Volume</span>
-            <div class="ranking-track"><div class="ranking-fill" style="width:62%"></div></div>
-            <span class="ranking-val">62%</span>
-          </div>
-          <div class="ranking-bar">
-            <span class="ranking-label">Avg. Star Rating</span>
-            <div class="ranking-track"><div class="ranking-fill" style="width:82%"></div></div>
-            <span class="ranking-val">82%</span>
-          </div>
-          <div class="ranking-trend">
-            📈 Businesses using RankSniper respond 3x faster on average
-          </div>
+          <div class="ranking-bar"><span class="ranking-label">Response Rate</span><div class="ranking-track"><div class="ranking-fill" style="width:88%"></div></div><span class="ranking-val">88%</span></div>
+          <div class="ranking-bar"><span class="ranking-label">Keyword Usage</span><div class="ranking-track"><div class="ranking-fill" style="width:94%"></div></div><span class="ranking-val">94%</span></div>
+          <div class="ranking-bar"><span class="ranking-label">Response Speed</span><div class="ranking-track"><div class="ranking-fill" style="width:76%"></div></div><span class="ranking-val">76%</span></div>
+          <div class="ranking-bar"><span class="ranking-label">Review Volume</span><div class="ranking-track"><div class="ranking-fill" style="width:62%"></div></div><span class="ranking-val">62%</span></div>
+          <div class="ranking-bar"><span class="ranking-label">Avg. Star Rating</span><div class="ranking-track"><div class="ranking-fill" style="width:82%"></div></div><span class="ranking-val">82%</span></div>
+          <div class="ranking-trend">📈 RankSniper users respond 3x faster on average</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SMS SECTION -->
+<!-- SMS -->
 <section class="sms-section" id="sms">
   <div class="container">
     <div class="sms-grid">
@@ -1137,42 +418,18 @@
         <div class="section-label">SMS Alerts</div>
         <h2 class="section-title">Know the second a review comes in.</h2>
         <p class="section-sub">Speed matters. Google favors businesses that respond quickly. RankSniper texts you the moment a new review appears so you can reply before your competitors even know it happened.</p>
-        <div class="seo-points" style="margin-top:32px;">
-          <div class="seo-point">
-            <div class="seo-icon green">📱</div>
-            <div>
-              <div class="seo-point-title">Instant text alerts</div>
-              <div class="seo-point-desc">Get a text the moment someone leaves a review — no more checking manually every day.</div>
-            </div>
-          </div>
-          <div class="seo-point">
-            <div class="seo-icon blue">🕐</div>
-            <div>
-              <div class="seo-point-title">Respond within minutes</div>
-              <div class="seo-point-desc">The faster you respond, the better your ranking signal. Most businesses take days — you'll respond in minutes.</div>
-            </div>
-          </div>
-          <div class="seo-point">
-            <div class="seo-icon purple">🔔</div>
-            <div>
-              <div class="seo-point-title">Never miss a review</div>
-              <div class="seo-point-desc">Unanswered negative reviews hurt your reputation and ranking. SMS alerts make sure nothing slips through.</div>
-            </div>
-          </div>
+        <div class="seo-points" style="margin-top:28px;">
+          <div class="seo-point"><div class="seo-icon green">📱</div><div><div class="seo-point-title">Instant text alerts</div><div class="seo-point-desc">Get a text the moment someone leaves a review — no more checking manually every day.</div></div></div>
+          <div class="seo-point"><div class="seo-icon blue">🕐</div><div><div class="seo-point-title">Respond within minutes</div><div class="seo-point-desc">Most businesses take days to respond. You'll respond in minutes, giving you a major ranking advantage.</div></div></div>
+          <div class="seo-point"><div class="seo-icon purple">🔔</div><div><div class="seo-point-title">Never miss a review</div><div class="seo-point-desc">Unanswered negative reviews hurt your reputation and ranking. SMS alerts make sure nothing slips through.</div></div></div>
         </div>
       </div>
       <div class="fade-up">
         <div class="phone-mockup">
           <div class="phone-notch"></div>
-          <div class="sms-bubble">
-            <strong>🎯 RankSniper Alert</strong>
-            New 2-star review from Sarah M. at John's Pizza:<br>"The service was slow and my order was wrong..."
-          </div>
+          <div class="sms-bubble"><strong>🎯 RankSniper Alert</strong>New 2-star review from Sarah M.:<br>"The service was slow and my order was wrong..."</div>
           <div class="sms-time">Just now</div>
-          <div class="sms-bubble" style="background:#1e3a5f; color:#93c5fd;">
-            <strong>🎯 RankSniper Alert</strong>
-            New 5-star review from Jordan P.:<br>"Best pizza in Peoria! The staff was incredible..."
-          </div>
+          <div class="sms-bubble" style="background:#1e3a5f;color:#93c5fd;"><strong>🎯 RankSniper Alert</strong>New 5-star review from Jordan P.:<br>"Best pizza in Peoria! Staff was incredible..."</div>
           <div class="sms-time">2 min ago</div>
           <div class="sms-reply">Open RankSniper and click "Draft AI Response" to reply in seconds.</div>
         </div>
@@ -1200,10 +457,10 @@
           <li>1 business profile</li>
           <li>Response history</li>
           <li>SEO score on every response</li>
-          <li>Works on Google Business Profile</li>
+          <li>Works on Google Business Profile & Search</li>
           <li>Refine responses with AI chat</li>
         </ul>
-        <a href="#login" class="pricing-btn outline">Get Started Free</a>
+        <a href="#auth" class="pricing-btn outline">Get Started Free</a>
       </div>
       <div class="pricing-card featured fade-up">
         <div class="pricing-name">Pro</div>
@@ -1219,7 +476,7 @@
           <li>Works on Google Search too</li>
           <li>Priority support</li>
         </ul>
-        <a href="#login" class="pricing-btn filled">Start Pro — $29/mo</a>
+        <a href="#auth" class="pricing-btn filled">Start Pro — $29/mo</a>
       </div>
     </div>
   </div>
@@ -1233,67 +490,87 @@
       <h2 class="section-title">Common questions.</h2>
     </div>
     <div class="faq-list">
-      <div class="faq-item">
-        <button class="faq-q">Does RankSniper actually help me rank higher on Google? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Yes. Google's local ranking algorithm considers how actively you manage reviews — including response rate and response speed. By responding to every review quickly with keyword-rich responses, you send strong engagement signals to Google that improve your visibility in local search results and Google Maps.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Will the AI responses sound robotic or fake? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">RankSniper is specifically tuned to avoid AI-sounding phrases like "we strive to" and "we are delighted." Every response starts with the reviewer's first name, references specific details from their review, and sounds like it came from a real person. You can also refine any response with the built-in chat box.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">How does the SMS alert system work? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">RankSniper uses Twilio to send you a text message the moment a new review appears on your Google Business Profile. The SMS includes the reviewer's name, star rating, and the first part of their review so you know exactly what you're dealing with before you even open your computer.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">What are "keywords" and why do they matter? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Keywords in review responses are words like your city name, business name, and services (e.g. "shawarma", "Glendale", "Mediterranean food"). When Google indexes your review replies, it picks up these keywords and uses them to understand what your business does and where it's located — which helps you rank for those terms in local search.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Does it work on Google Maps and Google Search too? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Yes. RankSniper works on Google Business Profile (business.google.com), Google Search results pages, and Google Maps. The Draft AI Response button appears wherever your reviews appear.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Is my API key secure? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Your Gemini API key is stored locally in your browser using Chrome's secure storage — it never touches our servers. You can also rotate your key at any time from Google AI Studio.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">Can I manage multiple business locations? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Yes. With the Pro plan you can create up to 10 separate business profiles, each with their own business name, city, services, tone, and custom instructions. Switch between them instantly from the extension popup.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q">What is the SEO score? <span class="faq-arrow">+</span></button>
-        <div class="faq-a">Every AI-generated response gets scored out of 100 based on factors like length, personalization, keyword inclusion, call to action, and whether it avoids generic AI phrases. A score of 90+ means your response is highly optimized for both human readers and Google's algorithm.</div>
-      </div>
+      <div class="faq-item"><button class="faq-q">Does RankSniper actually help me rank higher on Google? <span class="faq-arrow">+</span></button><div class="faq-a">Yes. Google's local ranking algorithm considers how actively you manage reviews — including response rate and response speed. By responding to every review quickly with keyword-rich responses, you send strong engagement signals to Google that improve your visibility in local search results.</div></div>
+      <div class="faq-item"><button class="faq-q">Will the AI responses sound robotic or fake? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper is specifically tuned to avoid AI-sounding phrases. Every response starts with the reviewer's first name, references specific details from their review, and sounds like it came from a real person. You can also refine any response with the built-in chat box.</div></div>
+      <div class="faq-item"><button class="faq-q">How does the SMS alert system work? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper uses Twilio to send you a text message the moment a new review appears on your Google Business Profile. The SMS includes the reviewer's name, star rating, and the first part of their review so you know exactly what you're dealing with before you open your computer.</div></div>
+      <div class="faq-item"><button class="faq-q">What are "keywords" and why do they matter? <span class="faq-arrow">+</span></button><div class="faq-a">Keywords in review responses are words like your city name, business name, and services. When Google indexes your review replies, it picks up these keywords and uses them to understand what your business does and where it's located — which helps you rank for those terms in local search.</div></div>
+      <div class="faq-item"><button class="faq-q">Does it work on Google Maps? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper works on Google Business Profile (business.google.com) and Google Search results pages. The Draft AI Response button appears wherever your reviews appear on those platforms.</div></div>
+      <div class="faq-item"><button class="faq-q">Is my API key secure? <span class="faq-arrow">+</span></button><div class="faq-a">Your Gemini API key is stored locally in your browser using Chrome's secure storage — it never touches our servers. You can rotate your key at any time from Google AI Studio.</div></div>
+      <div class="faq-item"><button class="faq-q">Can I manage multiple business locations? <span class="faq-arrow">+</span></button><div class="faq-a">Yes. With the Pro plan you can create up to 10 separate business profiles, each with their own business name, city, services, tone, and custom instructions. Switch between them instantly from the extension popup.</div></div>
+      <div class="faq-item"><button class="faq-q">What is the SEO score? <span class="faq-arrow">+</span></button><div class="faq-a">Every AI-generated response gets scored out of 100 based on factors like length, personalization, keyword inclusion, call to action, and whether it avoids generic AI phrases. A score of 90+ means your response is highly optimized.</div></div>
     </div>
   </div>
 </section>
 
-<!-- LOGIN -->
-<section class="login-section" id="login">
+<!-- AUTH -->
+<section class="auth-section" id="auth">
   <div class="container">
     <div class="fade-up" style="text-align:center;">
       <div class="section-label">Get Started</div>
       <h2 class="section-title">Start responding smarter.</h2>
     </div>
-    <div class="login-card fade-up">
-      <div class="login-title">Create your account</div>
-      <div class="login-sub">Free forever. No credit card required.</div>
-      <div class="form-group">
-        <label class="form-label">Email address</label>
-        <input type="email" class="form-input" placeholder="you@business.com">
+    <div class="auth-card fade-up">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-form="signup">Create Account</button>
+        <button class="auth-tab" data-form="login">Log In</button>
+        <button class="auth-tab" data-form="forgot">Forgot Password</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" class="form-input" placeholder="Create a password">
+
+      <!-- SIGNUP -->
+      <form class="auth-form active" id="form-signup">
+        <div class="form-group"><label class="form-label">Email address</label><input type="email" class="form-input" id="signup-email" placeholder="you@business.com" required></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="signup-password" placeholder="Create a password" required></div>
+        <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-input" id="signup-business" placeholder="e.g. John's Pizza"></div>
+        <button type="submit" class="auth-btn" id="signup-btn">Create Free Account</button>
+        <div class="auth-msg" id="signup-msg"></div>
+      </form>
+
+      <!-- LOGIN -->
+      <form class="auth-form" id="form-login">
+        <div class="form-group"><label class="form-label">Email address</label><input type="email" class="form-input" id="login-email" placeholder="you@business.com" required></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="login-password" placeholder="Your password" required></div>
+        <div class="forgot-link"><a onclick="switchTab('forgot')">Forgot password?</a></div>
+        <button type="submit" class="auth-btn" id="login-btn">Log In</button>
+        <div class="auth-msg" id="login-msg"></div>
+      </form>
+
+      <!-- FORGOT PASSWORD -->
+      <form class="auth-form" id="form-forgot">
+        <p style="font-size:13px;color:var(--subtle);margin-bottom:16px;">Enter your email and we'll send you a reset link.</p>
+        <div class="form-group"><label class="form-label">Email address</label><input type="email" class="form-input" id="forgot-email" placeholder="you@business.com" required></div>
+        <button type="submit" class="auth-btn" id="forgot-btn">Send Reset Link</button>
+        <div class="auth-msg" id="forgot-msg"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="container">
+    <div class="fade-up">
+      <div class="section-label">Contact Us</div>
+      <h2 class="section-title">We're here to help.</h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info fade-up">
+        <h3>Get in touch</h3>
+        <p>Have a question about RankSniper? Want to report a bug or request a feature? We respond to every message within 24 hours.</p>
+        <div class="contact-detail"><span>📧</span> hello@ranksniper.io</div>
+        <div class="contact-detail"><span>💬</span> Average response time: under 24 hours</div>
+        <div class="contact-detail"><span>🕐</span> Support hours: Mon–Fri, 9am–6pm PST</div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Business Name</label>
-        <input type="text" class="form-input" placeholder="e.g. John's Pizza">
+      <div class="fade-up">
+        <div class="contact-form">
+          <form id="form-contact">
+            <div class="form-group"><label class="form-label">Your Name</label><input type="text" class="form-input" id="contact-name" placeholder="John Smith" required></div>
+            <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-input" id="contact-email" placeholder="you@business.com" required></div>
+            <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" id="contact-message" placeholder="Tell us how we can help..." required></textarea></div>
+            <button type="submit" class="contact-btn" id="contact-btn">Send Message</button>
+            <div class="auth-msg" id="contact-msg"></div>
+          </form>
+        </div>
       </div>
-      <button class="login-btn">Create Free Account</button>
-      <div class="login-divider">or</div>
-      <div class="login-switch">Already have an account? <a href="#">Log in</a></div>
     </div>
   </div>
 </section>
@@ -1307,7 +584,7 @@
         <li><a href="#how">How It Works</a></li>
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="#faq">FAQ</a></li>
-        <li><a href="mailto:hello@ranksniper.io">Contact</a></li>
+        <li><a href="#contact">Contact</a></li>
       </ul>
       <div class="footer-copy">© 2026 RankSniper</div>
     </div>
@@ -1315,36 +592,151 @@
 </footer>
 
 <script>
-  // FAQ accordion
-  document.querySelectorAll('.faq-q').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const item = btn.closest('.faq-item');
-      const isOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-      if (!isOpen) item.classList.add('open');
+const API = '';
+
+// Tab switching
+function switchTab(name) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.querySelector(`[data-form="${name}"]`).classList.add('active');
+  document.getElementById(`form-${name}`).classList.add('active');
+}
+
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.dataset.form));
+});
+
+// Nav login click
+document.getElementById('nav-login').addEventListener('click', (e) => {
+  e.preventDefault();
+  switchTab('login');
+  document.getElementById('auth').scrollIntoView({ behavior: 'smooth' });
+});
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `auth-msg ${type}`;
+  el.style.display = 'block';
+}
+
+// Signup
+document.getElementById('form-signup').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('signup-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const res = await fetch(API + '/api/auth/signup', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('signup-email').value,
+        password: document.getElementById('signup-password').value,
+        businessName: document.getElementById('signup-business').value
+      })
     });
-  });
-
-  // Scroll animations
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-  // Nav active state
-  window.addEventListener('scroll', () => {
-    const nav = document.querySelector('nav');
-    if (window.scrollY > 50) {
-      nav.style.borderBottomColor = 'rgba(255,255,255,0.1)';
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('signup-msg', '✓ Account created! Check your email to verify your account.', 'success');
     } else {
-      nav.style.borderBottomColor = 'rgba(255,255,255,0.07)';
+      showMsg('signup-msg', data.error || 'Signup failed', 'error');
     }
+  } catch (err) {
+    showMsg('signup-msg', 'Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Free Account';
+  }
+});
+
+// Login
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch(API + '/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('rs_token', data.token);
+      showMsg('login-msg', '✓ Logged in! Redirecting...', 'success');
+      setTimeout(() => window.location.href = '/dashboard', 1500);
+    } else {
+      showMsg('login-msg', data.error || 'Login failed', 'error');
+    }
+  } catch (err) {
+    showMsg('login-msg', 'Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Log In';
+  }
+});
+
+// Forgot password
+document.getElementById('form-forgot').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('forgot-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const res = await fetch(API + '/api/auth/forgot-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('forgot-email').value })
+    });
+    const data = await res.json();
+    showMsg('forgot-msg', data.message || 'Reset link sent!', res.ok ? 'success' : 'error');
+  } catch (err) {
+    showMsg('forgot-msg', 'Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send Reset Link';
+  }
+});
+
+// Contact
+document.getElementById('form-contact').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('contact-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const res = await fetch(API + '/api/contact', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('contact-name').value,
+        email: document.getElementById('contact-email').value,
+        message: document.getElementById('contact-message').value
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('contact-msg', '✓ Message sent! We will get back to you within 24 hours.', 'success');
+      document.getElementById('form-contact').reset();
+    } else {
+      showMsg('contact-msg', data.error || 'Failed to send', 'error');
+    }
+  } catch (err) {
+    showMsg('contact-msg', 'Network error. Please try again.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send Message';
+  }
+});
+
+// FAQ
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
   });
+});
+
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 </script>
 </body>
 </html>
