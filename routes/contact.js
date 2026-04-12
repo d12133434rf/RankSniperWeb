@@ -13,12 +13,12 @@ router.post('/', async (req, res) => {
     // Save to Supabase
     await supabase.from('contact_messages').insert({ name, email, message, created_at: new Date().toISOString() });
 
-    // Send email notification to RankSniper
+    // Send email notification
     try {
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
 
