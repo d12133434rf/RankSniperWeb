@@ -29,7 +29,10 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
       payment_method_types: ['card'],
       line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID, quantity: 1 }],
       mode: 'subscription',
-      success_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/dashboard?upgraded=true',
+      subscription_data: {
+        trial_period_days: 30,
+      },
+      success_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/dashboard.html?upgraded=true',
       cancel_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/#pricing',
     });
 
@@ -53,20 +56,23 @@ router.post('/webhook', async (req, res) => {
 
   const session = event.data.object;
 
-  if (event.type === 'checkout.session.completed' || event.type === 'invoice.payment_succeeded') {
+  // Trial started or payment succeeded - give pro access
+  if (event.type === 'checkout.session.completed' || 
+      event.type === 'invoice.payment_succeeded' ||
+      event.type === 'customer.subscription.trial_will_end') {
     const customerId = session.customer;
-    await supabase
-      .from('users')
-      .update({ plan: 'pro' })
-      .eq('stripe_customer_id', customerId);
+    if (customerId) {
+      await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
+    }
   }
 
-  if (event.type === 'customer.subscription.deleted') {
+  // Subscription cancelled or trial ended without payment
+  if (event.type === 'customer.subscription.deleted' || 
+      event.type === 'invoice.payment_failed') {
     const customerId = session.customer;
-    await supabase
-      .from('users')
-      .update({ plan: 'free' })
-      .eq('stripe_customer_id', customerId);
+    if (customerId) {
+      await supabase.from('users').update({ plan: 'expired' }).eq('stripe_customer_id', customerId);
+    }
   }
 
   res.json({ received: true });
