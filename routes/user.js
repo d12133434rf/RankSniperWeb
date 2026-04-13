@@ -10,7 +10,7 @@ router.get('/me', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
       .from('users')
-      .select('id, email, plan, usage_count, business_name, phone, created_at')
+      .select('id, email, plan, usage_count, business_name, phone, created_at, trial_ends_at')
       .eq('id', req.user.id)
       .single();
 
@@ -32,9 +32,9 @@ router.post('/usage', authMiddleware, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Check limits
-    if (user.plan === 'free' && user.usage_count >= 10) {
-      return res.status(403).json({ error: 'Free plan limit reached. Upgrade to Pro for unlimited responses.' });
+    // Check limits - only pro users (trial or paid) can use
+    if (user.plan !== 'pro') {
+      return res.status(403).json({ error: 'Start your free trial to use RankSniper.' });
     }
 
     const { data } = await supabase
