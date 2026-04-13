@@ -94,8 +94,16 @@ router.get('/verify', async (req, res) => {
 
     if (error || !user) return res.status(400).send('Invalid or expired verification link');
 
-    const jwtToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.redirect(`${process.env.FRONTEND_URL || 'https://getranksniper.com'}/dashboard.html?token=${jwtToken}`);
+    res.send(`
+      <html><head><meta http-equiv="refresh" content="3;url=${process.env.FRONTEND_URL || 'https://getranksniper.com'}/#auth"></head>
+      <body style="font-family:sans-serif;background:#050810;color:#f0f4ff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;">
+        <div>
+          <div style="font-size:48px;margin-bottom:16px;">✅</div>
+          <h2 style="color:#22c55e;margin-bottom:8px;">Email Verified!</h2>
+          <p style="color:#94a3b8;">Your account is ready. Redirecting you to log in...</p>
+        </div>
+      </body></html>
+    `);
   } catch (err) {
     res.status(500).send('Verification failed');
   }
