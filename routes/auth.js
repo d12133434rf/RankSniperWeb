@@ -63,7 +63,8 @@ router.post('/signup', async (req, res) => {
 
     if (error) throw error;
 
-    const verifyUrl = `${process.env.FRONTEND_URL || 'https://getranksniper.com'}/api/auth/verify?token=${verificationToken}`;
+    const verifyUrl = `${process.env.RAILWAY_URL || 'https://ranksniperweb-production.up.railway.app'}/api/auth/verify?token=${verificationToken}`;
+    
     await sendEmail(email, 'Verify your RankSniper account', `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
         <h2 style="color:#3b82f6;">Welcome to RankSniper!</h2>
