@@ -228,14 +228,27 @@ async function init() {
   const token = localStorage.getItem('rs_token');
   if (!token) { window.location.href = '/#auth'; return; }
 
-  try {
-    const res = await fetch(API + '/api/user/me', { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) { localStorage.removeItem('rs_token'); window.location.href = '/#auth'; return; }
-    userData = await res.json();
-    renderDashboard(userData);
-  } catch (err) {
-    console.error('Dashboard load error:', err);
-    // Don't redirect on network error — just show blank
+  // Try up to 2 times in case of network hiccup
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(API + '/api/user/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.status === 401) {
+        // Only log out on explicit 401 (invalid token), not other errors
+        localStorage.removeItem('rs_token');
+        window.location.href = '/#auth';
+        return;
+      }
+      if (!res.ok) {
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        return; // Don't log out on server errors
+      }
+      userData = await res.json();
+      renderDashboard(userData);
+      return;
+    } catch (err) {
+      console.error('Dashboard load error attempt', attempt + 1, err);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+    }
   }
 }
 
