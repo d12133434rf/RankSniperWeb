@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const stripeRoutes = require('./routes/stripe');
 const userRoutes = require('./routes/user');
 const contactRoutes = require('./routes/contact');
+const smsRoutes = require('./routes/sms');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/sms', smsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
