@@ -20,7 +20,7 @@ async function sendEmail(to, subject, html) {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'RankSniper <no-reply@ranksniper.com>',
+        from: 'RankSniper <no-reply@getranksniper.com>',
         to: [to],
         subject,
         html
