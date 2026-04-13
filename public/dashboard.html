@@ -44,7 +44,6 @@
   .section-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
   .section-title span { font-size: 18px; }
 
-  /* Extension install */
   .install-steps { display: flex; flex-direction: column; gap: 14px; }
   .install-step { display: flex; gap: 14px; align-items: flex-start; padding: 16px; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border); }
   .install-step-num { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
@@ -52,22 +51,18 @@
   .install-step-text strong { color: var(--text); display: block; margin-bottom: 3px; }
   .install-link { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin-top: 16px; }
 
-  /* Phone number */
   .phone-form { display: flex; gap: 10px; margin-top: 4px; }
-  .phone-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 13px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; }
+  .phone-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 13px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; }
   .phone-input:focus { border-color: var(--accent); }
   .phone-input::placeholder { color: var(--muted); }
   .phone-btn { padding: 10px 20px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
   .phone-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
-  .phone-success { font-size: 13px; color: var(--green); margin-top: 8px; display: none; }
 
-  /* Upgrade */
   .upgrade-card { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(59,130,246,0.05)); border: 1px solid rgba(99,102,241,0.3); border-radius: 14px; padding: 28px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
   .upgrade-text h3 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 6px; }
   .upgrade-text p { font-size: 14px; color: var(--subtle); }
   .upgrade-btn { padding: 12px 24px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
 
-  /* Profile */
   .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
   .profile-row:last-child { border-bottom: none; }
   .profile-key { color: var(--muted); }
@@ -76,6 +71,9 @@
   .msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 10px; display: none; }
   .msg.success { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
   .msg.error { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+
+  .sms-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 12px 13px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.2s; resize: vertical; min-height: 180px; line-height: 1.7; }
+  .sms-textarea:focus { border-color: var(--accent); }
 
   @media (max-width: 768px) {
     .main { padding: 24px 16px; }
@@ -124,7 +122,6 @@
     </div>
   </div>
 
-  <!-- Upgrade banner (hidden for pro) -->
   <div class="upgrade-card" id="upgrade-banner">
     <div class="upgrade-text">
       <h3>Upgrade to Pro — $29/month</h3>
@@ -133,90 +130,74 @@
     <button class="upgrade-btn" onclick="upgrade()">Upgrade Now</button>
   </div>
 
-  <!-- Install extension -->
   <div class="section">
     <div class="section-title"><span>🧩</span> Install the Chrome Extension</div>
     <div class="install-steps">
-      <div class="install-step">
-        <div class="install-step-num">1</div>
-        <div class="install-step-text"><strong>Download the extension</strong>Click the button below to get RankSniper from the Chrome Web Store (or install manually if you have the zip file).</div>
-      </div>
-      <div class="install-step">
-        <div class="install-step-num">2</div>
-        <div class="install-step-text"><strong>Pin it to your toolbar</strong>After installing, click the puzzle piece icon in Chrome and pin RankSniper so it's always visible.</div>
-      </div>
-      <div class="install-step">
-        <div class="install-step-num">3</div>
-        <div class="install-step-text"><strong>Set up your business profile</strong>Click the RankSniper icon and fill in your business name, city, and services. This personalizes every AI response.</div>
-      </div>
-      <div class="install-step">
-        <div class="install-step-num">4</div>
-        <div class="install-step-text"><strong>Go to your reviews</strong>Visit business.google.com/reviews and click "Draft AI Response" next to any review.</div>
-      </div>
+      <div class="install-step"><div class="install-step-num">1</div><div class="install-step-text"><strong>Download the extension</strong>Click the button below to get RankSniper from the Chrome Web Store (or install manually if you have the zip file).</div></div>
+      <div class="install-step"><div class="install-step-num">2</div><div class="install-step-text"><strong>Pin it to your toolbar</strong>After installing, click the puzzle piece icon in Chrome and pin RankSniper so it's always visible.</div></div>
+      <div class="install-step"><div class="install-step-num">3</div><div class="install-step-text"><strong>Set up your business profile</strong>Click the RankSniper icon and fill in your business name, city, and services. This personalizes every AI response.</div></div>
+      <div class="install-step"><div class="install-step-num">4</div><div class="install-step-text"><strong>Go to your reviews</strong>Visit business.google.com/reviews and click "Draft AI Response" next to any review.</div></div>
     </div>
     <a href="https://getranksniper.com" class="install-link">🚀 Get RankSniper Extension</a>
   </div>
 
-  <!-- SMS Alerts / Phone number -->
   <div class="section">
     <div class="section-title"><span>📱</span> SMS Review Alerts <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
     <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Get a text the moment a new review comes in so you can respond instantly. Available on the Pro plan.</p>
-    <div id="phone-section">
-      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Your Phone Number</label>
-      <div class="phone-form">
-        <input type="tel" class="phone-input" id="phone-input" placeholder="+1 (555) 000-0000">
-        <button class="phone-btn" onclick="savePhone()">Save Number</button>
-      </div>
-      <div class="phone-note">Standard SMS rates apply. You can opt out anytime.</div>
-      <div class="msg success" id="phone-msg"></div>
+    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Your Phone Number</label>
+    <div class="phone-form">
+      <input type="tel" class="phone-input" id="phone-input" placeholder="+1 (555) 000-0000" style="flex:1;">
+      <button class="phone-btn" onclick="savePhone()">Save Number</button>
     </div>
+    <div class="phone-note">Standard SMS rates apply. You can opt out anytime.</div>
+    <div class="msg" id="phone-msg"></div>
   </div>
 
-  <!-- Request Review -->
   <div class="section">
     <div class="section-title"><span>⭐</span> Request a Google Review <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
     <p style="font-size:14px;color:var(--subtle);margin-bottom:20px;">Send a customer a text message asking them to leave you a Google review. Just enter their name, phone number, and your Google review link.</p>
-    <div id="review-request-form">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div>
-          <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Name</label>
-          <input type="text" class="phone-input" id="customer-name" placeholder="e.g. Sarah">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Phone</label>
-          <input type="tel" class="phone-input" id="customer-phone" placeholder="+1 (555) 000-0000">
-        </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Name</label>
+        <input type="text" class="phone-input" id="customer-name" placeholder="e.g. Sarah">
       </div>
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Your Google Review Link</label>
-        <input type="url" class="phone-input" id="review-link" placeholder="https://g.page/r/your-business/review">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Phone</label>
+        <input type="tel" class="phone-input" id="customer-phone" placeholder="+1 (555) 000-0000">
       </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Business Name (for the SMS)</label>
-        <input type="text" class="phone-input" id="sms-business-name" placeholder="e.g. John's Pizza">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">📱 SMS Message <span style="color:var(--muted);font-weight:400;text-transform:none;">(edit freely)</span></label>
-        <textarea class="phone-input" id="sms-preview" rows="6" style="resize:vertical;line-height:1.6;">Hi [Customer]! Thanks for visiting [Business]. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Your Google Review Link</label>
+      <input type="url" class="phone-input" id="review-link" placeholder="https://g.page/r/your-business/review">
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Business Name (for the SMS)</label>
+      <input type="text" class="phone-input" id="sms-business-name" placeholder="e.g. John's Pizza">
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">📱 SMS Message <span style="color:var(--muted);font-weight:400;text-transform:none;">(edit freely)</span></label>
+      <textarea class="sms-textarea" id="sms-preview">Hi [Customer]! Thanks for visiting [Business]. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!
 
 [Review Link]
 
 Thank you!</textarea>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;" id="char-count">0 / 160 characters</div>
-      </div>
-      <button class="phone-btn" onclick="sendReviewRequest()" id="send-review-btn">Send Review Request</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:8px;">By sending, you confirm the customer has verbally agreed to receive a text from your business.</p>
-      <div class="msg" id="review-msg"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;" id="char-count">0 characters</div>
     </div>
 
-    <!-- Recent requests -->
+    <button class="phone-btn" onclick="sendReviewRequest()" id="send-review-btn">Send Review Request</button>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;">By sending, you confirm the customer has verbally agreed to receive a text from your business.</p>
+    <div class="msg" id="review-msg"></div>
+
     <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
       <div style="font-size:13px;font-weight:600;color:var(--subtle);margin-bottom:12px;">Recent Requests</div>
       <div id="requests-list" style="font-size:13px;color:var(--muted);">Loading...</div>
     </div>
   </div>
 
-  <!-- Account info -->
   <div class="section">
     <div class="section-title"><span>👤</span> Account</div>
     <div class="profile-row"><span class="profile-key">Email</span><span class="profile-val" id="profile-email">—</span></div>
@@ -231,7 +212,6 @@ const API = '';
 let userData = null;
 
 async function init() {
-  // Check for token in URL (from email verification redirect)
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get('token');
   if (urlToken) {
@@ -243,14 +223,11 @@ async function init() {
   if (!token) { window.location.href = '/#auth'; return; }
 
   try {
-    const res = await fetch(API + '/api/user/me', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+    const res = await fetch(API + '/api/user/me', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) { localStorage.removeItem('rs_token'); window.location.href = '/#auth'; return; }
     userData = await res.json();
     renderDashboard(userData);
   } catch (err) {
-    console.error('Failed to load user:', err);
     window.location.href = '/#auth';
   }
 }
@@ -259,11 +236,10 @@ function renderDashboard(user) {
   const name = user.business_name || user.email.split('@')[0];
   document.getElementById('welcome-sub').textContent = `Good to see you, ${name}. Here's your RankSniper dashboard.`;
   document.getElementById('user-email').textContent = user.email;
-
   const isPro = user.plan === 'pro';
   document.getElementById('plan-display').textContent = isPro ? 'Pro ✨' : 'Free';
   document.getElementById('usage-display').textContent = user.usage_count || 0;
-  document.getElementById('usage-sub').textContent = isPro ? 'Unlimited responses' : `of 10 this month`;
+  document.getElementById('usage-sub').textContent = isPro ? 'Unlimited responses' : 'of 10 this month';
   document.getElementById('profile-email').textContent = user.email;
   document.getElementById('profile-plan').innerHTML = isPro ? '<span class="plan-badge pro">Pro</span>' : '<span class="plan-badge free">Free</span>';
   document.getElementById('profile-phone').textContent = user.phone || 'Not set';
@@ -276,7 +252,6 @@ async function savePhone() {
   const phone = document.getElementById('phone-input').value.trim();
   const msg = document.getElementById('phone-msg');
   if (!phone) { msg.textContent = 'Please enter a phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
-
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch(API + '/api/user/phone', {
@@ -285,51 +260,31 @@ async function savePhone() {
       body: JSON.stringify({ phone })
     });
     const data = await res.json();
-    if (res.ok) {
-      msg.textContent = '✓ Phone number saved!';
-      msg.className = 'msg success'; msg.style.display = 'block';
-      document.getElementById('profile-phone').textContent = phone;
-    } else {
-      msg.textContent = data.error || 'Failed to save';
-      msg.className = 'msg error'; msg.style.display = 'block';
-    }
-  } catch (err) {
-    msg.textContent = 'Network error. Please try again.';
-    msg.className = 'msg error'; msg.style.display = 'block';
-  }
+    if (res.ok) { msg.textContent = '✓ Phone number saved!'; msg.className = 'msg success'; msg.style.display = 'block'; document.getElementById('profile-phone').textContent = phone; }
+    else { msg.textContent = data.error || 'Failed to save'; msg.className = 'msg error'; msg.style.display = 'block'; }
+  } catch (err) { msg.textContent = 'Network error.'; msg.className = 'msg error'; msg.style.display = 'block'; }
 }
 
 async function upgrade() {
   const token = localStorage.getItem('rs_token');
   try {
-    const res = await fetch(API + '/api/stripe/create-checkout', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-    });
+    const res = await fetch(API + '/api/stripe/create-checkout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-  } catch (err) {
-    alert('Failed to open checkout. Please try again.');
-  }
+  } catch (err) { alert('Failed to open checkout. Please try again.'); }
 }
 
-function logout() {
-  localStorage.removeItem('rs_token');
-  window.location.href = '/';
-}
+function logout() { localStorage.removeItem('rs_token'); window.location.href = '/'; }
 
-// Update SMS preview as user types
+// SMS preview
 ['customer-name', 'sms-business-name', 'review-link'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updateSMSPreview);
 });
-// Track manual edits to SMS textarea
+
 const smsTextarea = document.getElementById('sms-preview');
 if (smsTextarea) {
-  smsTextarea.addEventListener('input', () => {
-    smsTextarea.dataset.manuallyEdited = 'true';
-    updateCharCount();
-  });
+  smsTextarea.addEventListener('input', () => { smsTextarea.dataset.manuallyEdited = 'true'; updateCharCount(); });
   updateCharCount();
 }
 
@@ -338,7 +293,6 @@ function updateSMSPreview() {
   const biz = document.getElementById('sms-business-name').value.trim() || '[Business]';
   const link = document.getElementById('review-link').value.trim() || '[Review Link]';
   const textarea = document.getElementById('sms-preview');
-  // Only auto-update if user hasn't manually edited
   if (!textarea.dataset.manuallyEdited) {
     textarea.value = `Hi ${name}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!\n\n${link}\n\nThank you!`;
   }
@@ -360,10 +314,8 @@ async function sendReviewRequest() {
   const businessName = document.getElementById('sms-business-name').value.trim();
   const msg = document.getElementById('review-msg');
   const btn = document.getElementById('send-review-btn');
-
   if (!customerPhone) { msg.textContent = 'Please enter a customer phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
   if (!reviewLink) { msg.textContent = 'Please enter your Google review link'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
-
   btn.disabled = true; btn.textContent = 'Sending...';
   const token = localStorage.getItem('rs_token');
   try {
@@ -379,16 +331,9 @@ async function sendReviewRequest() {
       document.getElementById('customer-name').value = '';
       document.getElementById('customer-phone').value = '';
       loadReviewRequests();
-    } else {
-      msg.textContent = data.error || 'Failed to send';
-      msg.className = 'msg error'; msg.style.display = 'block';
-    }
-  } catch (err) {
-    msg.textContent = 'Network error. Please try again.';
-    msg.className = 'msg error'; msg.style.display = 'block';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Send Review Request';
-  }
+    } else { msg.textContent = data.error || 'Failed to send'; msg.className = 'msg error'; msg.style.display = 'block'; }
+  } catch (err) { msg.textContent = 'Network error. Please try again.'; msg.className = 'msg error'; msg.style.display = 'block'; }
+  finally { btn.disabled = false; btn.textContent = 'Send Review Request'; }
 }
 
 async function loadReviewRequests() {
@@ -404,9 +349,7 @@ async function loadReviewRequests() {
         <span style="color:var(--muted)">${new Date(r.sent_at).toLocaleDateString()}</span>
       </div>
     `).join('');
-  } catch (err) {
-    list.textContent = 'Could not load requests.';
-  }
+  } catch (err) { list.textContent = 'Could not load requests.'; }
 }
 
 init();
