@@ -88,7 +88,7 @@
 <body>
 
 <nav>
-  <a href="/" class="nav-logo">
+  <a href="javascript:void(0)" onclick="window.location.href='/'" class="nav-logo">
     <div class="nav-logo-icon">RS</div>
     RankSniper
   </a>
@@ -220,7 +220,6 @@ Thank you!</textarea>
     </div>
     <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
       <button class="phone-btn" onclick="openBillingPortal()" id="billing-portal-btn">Manage Subscription</button>
-      <a href="mailto:contactranksniper@gmail.com?subject=Cancel my RankSniper subscription" style="display:inline-flex;align-items:center;padding:10px 20px;border:1px solid var(--border);border-radius:8px;color:var(--subtle);font-size:14px;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--subtle)'">Contact to Cancel</a>
     </div>
     <p style="font-size:12px;color:var(--muted);margin-top:12px;">To cancel your subscription, click "Manage Subscription" and select Cancel, or email us at contactranksniper@gmail.com.</p>
   </div>
@@ -454,11 +453,21 @@ async function loadBilling(user) {
       const statusMap = { 'trialing': '🎉 Free Trial Active', 'active': '✅ Active', 'past_due': '⚠️ Payment Past Due', 'canceled': '❌ Canceled' };
       document.getElementById('billing-status').textContent = statusMap[data.status] || data.status;
 
-      if (data.trial_end) {
+      if (data.cancel_at_period_end) {
+        document.getElementById('billing-status').textContent = '⚠️ Cancels at period end';
+        document.getElementById('billing-amount').textContent = 'No renewal after current period';
+      }
+
+      if (data.status === 'canceled') {
+        document.getElementById('billing-date').textContent = 'Subscription ended';
+        document.getElementById('billing-amount').textContent = '—';
+      } else if (data.trial_end && data.status === 'trialing') {
         const trialEnd = new Date(data.trial_end * 1000);
         const daysLeft = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
-        document.getElementById('billing-date').textContent = trialEnd.toLocaleDateString() + (daysLeft > 0 ? ` (${daysLeft} days left in trial)` : '');
-        document.getElementById('billing-amount').textContent = '$0.00 until trial ends, then $29.00/month';
+        document.getElementById('billing-date').textContent = trialEnd.toLocaleDateString() + (daysLeft > 0 ? \` (\${daysLeft} days left in trial)\` : '');
+        if (!data.cancel_at_period_end) {
+          document.getElementById('billing-amount').textContent = '$0.00 until trial ends, then $29.00/month';
+        }
       } else if (data.current_period_end) {
         document.getElementById('billing-date').textContent = new Date(data.current_period_end * 1000).toLocaleDateString();
       }
