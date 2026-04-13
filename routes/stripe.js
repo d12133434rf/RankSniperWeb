@@ -100,4 +100,36 @@ router.post('/portal', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/stripe/subscription - get subscription details
+router.get('/subscription', authMiddleware, async (req, res) => {
+  try {
+    const { data: user } = await supabase
+      .from('users')
+      .select('stripe_customer_id')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!user?.stripe_customer_id) return res.json({ status: 'none' });
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.stripe_customer_id,
+      limit: 1,
+      status: 'all'
+    });
+
+    if (!subscriptions.data.length) return res.json({ status: 'none' });
+
+    const sub = subscriptions.data[0];
+    res.json({
+      status: sub.status,
+      trial_end: sub.trial_end,
+      current_period_end: sub.current_period_end,
+      cancel_at_period_end: sub.cancel_at_period_end
+    });
+  } catch (err) {
+    console.error('Subscription fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch subscription' });
+  }
+});
+
 module.exports = router;
