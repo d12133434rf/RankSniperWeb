@@ -6,6 +6,36 @@ const authMiddleware = require('../middleware/auth');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+// Resend HTTP API
+async function sendEmail(to, subject, html) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('RESEND_API_KEY not set, skipping email to:', to);
+      return false;
+    }
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'RankSniper <no-reply@ranksniper.com>',
+        to: [to],
+        subject,
+        html
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(JSON.stringify(data));
+    console.log('Welcome email sent to:', to);
+    return true;
+  } catch (e) {
+    console.error('Email send error:', e.message);
+    return false;
+  }
+}
+
 // POST /api/stripe/create-checkout - create Stripe checkout session
 router.post('/create-checkout', authMiddleware, async (req, res) => {
   try {
@@ -17,7 +47,6 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
 
     let customerId = user.stripe_customer_id;
 
-    // Create Stripe customer if doesn't exist
     if (!customerId) {
       const customer = await stripe.customers.create({ email: user.email, metadata: { userId: req.user.id } });
       customerId = customer.id;
@@ -56,9 +85,49 @@ router.post('/webhook', async (req, res) => {
 
   const session = event.data.object;
 
-  // Trial started or payment succeeded - give pro access
-  if (event.type === 'checkout.session.completed' || 
-      event.type === 'invoice.payment_succeeded' ||
+  if (event.type === 'checkout.session.completed') {
+    const customerId = session.customer;
+    if (customerId) {
+      // Upgrade plan in Supabase
+      await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
+
+      // Fetch user email and send welcome email
+      const { data: user } = await supabase
+        .from('users')
+        .select('email')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (user?.email) {
+        await sendEmail(
+          user.email,
+          '🎉 Welcome to RankSniper Pro!',
+          `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+            <h2 style="color:#3b82f6;">You're now on RankSniper Pro!</h2>
+            <p>Hi there,</p>
+            <p>Thank you for subscribing! Your 30-day free trial has started and you now have full access to all RankSniper Pro features.</p>
+            <h3 style="color:#1e40af;">What's included:</h3>
+            <ul>
+              <li>✅ Unlimited AI-powered review responses</li>
+              <li>✅ Smart tone matching</li>
+              <li>✅ All future features included</li>
+            </ul>
+            <p>You won't be charged until your trial ends. You can manage or cancel your subscription anytime from your dashboard.</p>
+            <a href="${process.env.FRONTEND_URL}/dashboard.html" 
+               style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
+              Go to Dashboard
+            </a>
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Reply to this email or contact us at contactranksniper@gmail.com</p>
+            <p style="color:#6b7280;font-size:14px;">— The RankSniper Team</p>
+          </div>
+          `
+        );
+      }
+    }
+  }
+
+  if (event.type === 'invoice.payment_succeeded' ||
       event.type === 'customer.subscription.trial_will_end') {
     const customerId = session.customer;
     if (customerId) {
@@ -66,8 +135,7 @@ router.post('/webhook', async (req, res) => {
     }
   }
 
-  // Subscription cancelled or trial ended without payment
-  if (event.type === 'customer.subscription.deleted' || 
+  if (event.type === 'customer.subscription.deleted' ||
       event.type === 'invoice.payment_failed') {
     const customerId = session.customer;
     if (customerId) {
@@ -78,7 +146,7 @@ router.post('/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
-// POST /api/stripe/portal - customer portal for managing subscription
+// POST /api/stripe/portal
 router.post('/portal', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
@@ -100,7 +168,7 @@ router.post('/portal', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/stripe/subscription - get subscription details
+// GET /api/stripe/subscription
 router.get('/subscription', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
