@@ -19,9 +19,11 @@ router.post('/request-review', authMiddleware, async (req, res) => {
 
     // Send SMS via Twilio
     const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    const { customMessage } = req.body;
     const firstName = customerName ? customerName.split(' ')[0] : 'there';
     const biz = businessName || 'us';
-    const message = `Hi ${firstName}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we'd really appreciate a quick Google review — it helps us a lot 🙏\n\n${reviewLink}\n\nThank you! 😊`;
+    const defaultMessage = `Hi ${firstName}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!\n\n${reviewLink}\n\nThank you!`;
+    const message = customMessage || defaultMessage;
 
     await twilio.messages.create({
       body: message,
