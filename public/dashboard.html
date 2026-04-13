@@ -237,15 +237,46 @@ function renderDashboard(user) {
   document.getElementById('welcome-sub').textContent = `Good to see you, ${name}. Here's your RankSniper dashboard.`;
   document.getElementById('user-email').textContent = user.email;
   const isPro = user.plan === 'pro';
-  document.getElementById('plan-display').textContent = isPro ? 'Pro ✨' : 'Free';
+  const now = new Date();
+  const trialEnds = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const trialActive = trialEnds && trialEnds > now;
+  const trialExpired = trialEnds && trialEnds <= now && !isPro;
+  const daysLeft = trialActive ? Math.ceil((trialEnds - now) / (1000 * 60 * 60 * 24)) : 0;
+
+  if (isPro) {
+    document.getElementById('plan-display').textContent = 'Pro ✨';
+    document.getElementById('upgrade-banner').style.display = 'none';
+  } else if (trialActive) {
+    document.getElementById('plan-display').textContent = 'Trial';
+    document.getElementById('plan-display').style.fontSize = '24px';
+    // Show trial countdown in upgrade banner
+    document.getElementById('upgrade-banner').innerHTML = `
+      <div class="upgrade-text">
+        <h3>⏳ ${daysLeft} day${daysLeft === 1 ? '' : 's'} left in your free trial</h3>
+        <p>You have full access to all Pro features during your trial. Upgrade before it ends to keep access.</p>
+      </div>
+      <button class="upgrade-btn" onclick="upgrade()">Upgrade Now — $29/mo</button>
+    `;
+  } else if (trialExpired) {
+    document.getElementById('plan-display').textContent = 'Expired';
+    document.getElementById('plan-display').style.color = '#ef4444';
+    document.getElementById('upgrade-banner').innerHTML = `
+      <div class="upgrade-text">
+        <h3>🔒 Your trial has ended</h3>
+        <p>Upgrade to Pro to continue using RankSniper and keep responding to reviews.</p>
+      </div>
+      <button class="upgrade-btn" onclick="upgrade()">Upgrade Now — $29/mo</button>
+    `;
+    document.getElementById('upgrade-banner').style.borderColor = 'rgba(239,68,68,0.4)';
+  }
+
   document.getElementById('usage-display').textContent = user.usage_count || 0;
-  document.getElementById('usage-sub').textContent = isPro ? 'Unlimited responses' : 'of 10 this month';
+  document.getElementById('usage-sub').textContent = isPro ? 'Unlimited responses' : trialActive ? `Trial — ${daysLeft} days left` : 'Trial ended';
   document.getElementById('profile-email').textContent = user.email;
-  document.getElementById('profile-plan').innerHTML = isPro ? '<span class="plan-badge pro">Pro</span>' : '<span class="plan-badge free">Free</span>';
+  document.getElementById('profile-plan').innerHTML = isPro ? '<span class="plan-badge pro">Pro</span>' : trialActive ? `<span class="plan-badge pro">Trial — ${daysLeft}d left</span>` : '<span class="plan-badge free">Expired</span>';
   document.getElementById('profile-phone').textContent = user.phone || 'Not set';
   if (user.phone) document.getElementById('phone-input').value = user.phone;
   if (user.created_at) document.getElementById('profile-since').textContent = new Date(user.created_at).toLocaleDateString();
-  if (isPro) document.getElementById('upgrade-banner').style.display = 'none';
 }
 
 async function savePhone() {
