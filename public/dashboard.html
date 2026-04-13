@@ -195,9 +195,14 @@
         <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Business Name (for the SMS)</label>
         <input type="text" class="phone-input" id="sms-business-name" placeholder="e.g. John's Pizza">
       </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--subtle);line-height:1.6;">
-        <strong style="color:var(--text);display:block;margin-bottom:6px;">📱 Preview SMS:</strong>
-        <span id="sms-preview">Hi [Customer]! Thanks for visiting [Business]. We hope you had a great experience! If you did, we'd really appreciate a quick Google review — it helps us a lot 🙏<br><br>[Review Link]<br><br>Thank you! 😊</span>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">📱 SMS Message <span style="color:var(--muted);font-weight:400;text-transform:none;">(edit freely)</span></label>
+        <textarea class="phone-input" id="sms-preview" rows="6" style="resize:vertical;line-height:1.6;">Hi [Customer]! Thanks for visiting [Business]. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!
+
+[Review Link]
+
+Thank you!</textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;" id="char-count">0 / 160 characters</div>
       </div>
       <button class="phone-btn" onclick="sendReviewRequest()" id="send-review-btn">Send Review Request</button>
       <p style="font-size:11px;color:var(--muted);margin-top:8px;">By sending, you confirm the customer has verbally agreed to receive a text from your business.</p>
@@ -318,12 +323,34 @@ function logout() {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updateSMSPreview);
 });
+// Track manual edits to SMS textarea
+const smsTextarea = document.getElementById('sms-preview');
+if (smsTextarea) {
+  smsTextarea.addEventListener('input', () => {
+    smsTextarea.dataset.manuallyEdited = 'true';
+    updateCharCount();
+  });
+  updateCharCount();
+}
 
 function updateSMSPreview() {
   const name = document.getElementById('customer-name').value.trim().split(' ')[0] || '[Customer]';
   const biz = document.getElementById('sms-business-name').value.trim() || '[Business]';
   const link = document.getElementById('review-link').value.trim() || '[Review Link]';
-  document.getElementById('sms-preview').innerHTML = `Hi ${name}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we'd really appreciate a quick Google review — it helps us a lot 🙏<br><br>${link}<br><br>Thank you! 😊`;
+  const textarea = document.getElementById('sms-preview');
+  // Only auto-update if user hasn't manually edited
+  if (!textarea.dataset.manuallyEdited) {
+    textarea.value = `Hi ${name}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we would really appreciate a quick Google review - it helps us a lot!\n\n${link}\n\nThank you!`;
+  }
+  updateCharCount();
+}
+
+function updateCharCount() {
+  const textarea = document.getElementById('sms-preview');
+  const count = textarea.value.length;
+  const el = document.getElementById('char-count');
+  el.textContent = count + ' / 160 characters';
+  el.style.color = count > 160 ? '#ef4444' : 'var(--muted)';
 }
 
 async function sendReviewRequest() {
@@ -343,7 +370,7 @@ async function sendReviewRequest() {
     const res = await fetch(API + '/api/sms/request-review', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName, customerPhone, reviewLink, businessName })
+      body: JSON.stringify({ customerName, customerPhone, reviewLink, businessName, customMessage: document.getElementById('sms-preview').value.trim() })
     });
     const data = await res.json();
     if (res.ok) {
