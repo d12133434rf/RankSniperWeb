@@ -506,6 +506,7 @@
         <div class="form-group"><label class="form-label">Email address</label><input type="email" class="form-input" id="signup-email" placeholder="you@business.com" required></div>
         <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="signup-password" placeholder="Create a password (min 6 chars)" required></div>
         <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-input" id="signup-business" placeholder="e.g. John's Pizza"></div>
+        <div class="form-group"><label class="form-label">Phone Number <span style="color:var(--muted);font-weight:400;text-transform:none;">(for SMS review alerts)</span></label><input type="tel" class="form-input" id="signup-phone" placeholder="+1 (555) 000-0000"></div>
         <button type="submit" class="auth-btn" id="signup-btn">Create Free Account</button>
         <div class="auth-msg" id="signup-msg"></div>
       </form>
@@ -667,14 +668,13 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
       body: JSON.stringify({
         email: document.getElementById('signup-email').value,
         password: document.getElementById('signup-password').value,
-        businessName: document.getElementById('signup-business').value
+        businessName: document.getElementById('signup-business').value,
+        phone: document.getElementById('signup-phone').value
       })
     });
     const data = await res.json();
     if (res.ok) {
-      if (data.token) localStorage.setItem('rs_token', data.token);
-      showMsg('signup-msg', '✓ Account created! You can now log in.', 'success');
-      setTimeout(() => switchTab('login'), 2000);
+      showMsg('signup-msg', '✓ Account created! Check your email and click the verification link before logging in.', 'success');
     } else {
       showMsg('signup-msg', data.error || 'Signup failed', 'error');
     }
@@ -700,7 +700,8 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem('rs_token', data.token);
-      showMsg('login-msg', '✓ Logged in!', 'success');
+      showMsg('login-msg', '✓ Logged in! Redirecting to dashboard...', 'success');
+      setTimeout(() => window.location.href = '/dashboard.html', 1500);
     } else {
       showMsg('login-msg', data.error || 'Login failed', 'error');
     }
