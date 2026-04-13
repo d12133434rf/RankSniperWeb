@@ -9,6 +9,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Resend HTTP API
 async function sendEmail(to, subject, html) {
   try {
+    console.log('Attempting to send email to:', to);
     if (!process.env.RESEND_API_KEY) {
       console.log('RESEND_API_KEY not set, skipping email to:', to);
       return false;
@@ -27,8 +28,9 @@ async function sendEmail(to, subject, html) {
       })
     });
     const data = await res.json();
+    console.log('Resend API response:', JSON.stringify(data));
     if (!res.ok) throw new Error(JSON.stringify(data));
-    console.log('Welcome email sent to:', to);
+    console.log('Welcome email sent successfully to:', to);
     return true;
   } catch (e) {
     console.error('Email send error:', e.message);
@@ -80,23 +82,26 @@ router.post('/webhook', async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
+    console.error('Webhook signature error:', err.message);
     return res.status(400).json({ error: 'Webhook signature failed' });
   }
 
+  console.log('Webhook event received:', event.type);
   const session = event.data.object;
 
   if (event.type === 'checkout.session.completed') {
     const customerId = session.customer;
+    console.log('checkout.session.completed fired, customerId:', customerId);
     if (customerId) {
-      // Upgrade plan in Supabase
       await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
 
-      // Fetch user email and send welcome email
       const { data: user } = await supabase
         .from('users')
         .select('email')
         .eq('stripe_customer_id', customerId)
         .single();
+
+      console.log('User found in Supabase:', user);
 
       if (user?.email) {
         await sendEmail(
@@ -123,6 +128,8 @@ router.post('/webhook', async (req, res) => {
           </div>
           `
         );
+      } else {
+        console.log('No user found in Supabase for customerId:', customerId);
       }
     }
   }
