@@ -150,10 +150,10 @@
   .pricing-features { list-style: none; margin-bottom: 24px; }
   .pricing-features li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--subtle); margin-bottom: 10px; }
   .pricing-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
-  .pricing-btn { width: 100%; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center; text-decoration: none; display: block; }
+  .pricing-btn { width: 100%; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center; text-decoration: none; display: block; border: none; }
   .pricing-btn.outline { background: none; border: 1px solid var(--border); color: var(--text); }
   .pricing-btn.outline:hover { border-color: rgba(255,255,255,0.3); }
-  .pricing-btn.filled { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; }
+  .pricing-btn.filled { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
   .pricing-btn.filled:hover { opacity: 0.9; }
 
   .faq { padding: 100px 0; background: var(--surface); }
@@ -211,14 +211,34 @@
   .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .fade-up.visible { opacity: 1; transform: translateY(0); }
 
-  /* Reset password modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; }
+  /* Modals */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
   .modal-overlay.active { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; max-width: 420px; width: 90%; position: relative; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; max-width: 420px; width: 100%; position: relative; }
   .modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 18px 18px 0 0; }
   .modal h3 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 8px; }
   .modal p { font-size: 14px; color: var(--subtle); margin-bottom: 24px; }
   .modal-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 6px; }
+
+  /* Plan picker modal */
+  .plan-picker { max-width: 520px; }
+  .plan-picker h3 { text-align: center; margin-bottom: 6px; }
+  .plan-picker .subtitle { text-align: center; margin-bottom: 28px; }
+  .plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .plan-option { background: var(--bg); border: 2px solid var(--border); border-radius: 14px; padding: 22px 18px; text-align: center; }
+  .plan-option.popular { border-color: rgba(99,102,241,0.4); position: relative; }
+  .plan-option.popular::before { content: 'Most Popular'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 100px; white-space: nowrap; }
+  .plan-option-name { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .plan-option-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800; margin: 8px 0 4px; }
+  .plan-option-period { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .plan-option-desc { font-size: 12px; color: var(--subtle); line-height: 1.5; margin-bottom: 16px; min-height: 40px; }
+  .plan-option-btn { width: 100%; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; border: none; }
+  .plan-option-btn.outline { background: none; border: 1px solid var(--border); color: var(--text); }
+  .plan-option-btn.outline:hover { border-color: rgba(255,255,255,0.3); }
+  .plan-option-btn.filled { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .plan-option-btn.filled:hover { opacity: 0.9; }
+  .plan-option-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .plan-loading { text-align: center; font-size: 13px; color: var(--muted); margin-top: 16px; display: none; }
 
   @media (max-width: 768px) {
     nav { padding: 14px 20px; }
@@ -256,6 +276,7 @@
     footer { padding: 40px 0 24px; }
     .footer-inner { flex-direction: column; align-items: flex-start; gap: 14px; }
     .footer-links { flex-wrap: wrap; gap: 16px; }
+    .plan-options { grid-template-columns: 1fr; }
   }
   @media (max-width: 480px) {
     .hero h1 { font-size: 28px; }
@@ -277,6 +298,31 @@
     <div class="form-group"><label class="form-label">Confirm Password</label><input type="password" class="form-input" id="reset-password-confirm" placeholder="Confirm new password"></div>
     <button class="modal-btn" id="reset-submit-btn">Reset Password</button>
     <div class="auth-msg" id="reset-msg"></div>
+  </div>
+</div>
+
+<!-- Plan Picker Modal -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal plan-picker">
+    <h3>Choose Your Plan</h3>
+    <p class="subtitle">Both plans include full Pro access — pick what works for you.</p>
+    <div class="plan-options">
+      <div class="plan-option">
+        <div class="plan-option-name">Free Trial</div>
+        <div class="plan-option-price">$0</div>
+        <div class="plan-option-period">for 30 days</div>
+        <div class="plan-option-desc">Full Pro access free. No charge until trial ends. Cancel anytime.</div>
+        <button class="plan-option-btn outline" id="btn-trial" onclick="startCheckout(true)">Start Free Trial</button>
+      </div>
+      <div class="plan-option popular">
+        <div class="plan-option-name">Pro</div>
+        <div class="plan-option-price">$29</div>
+        <div class="plan-option-period">per month</div>
+        <div class="plan-option-desc">Skip the trial. Full Pro access starting today.</div>
+        <button class="plan-option-btn filled" id="btn-pro" onclick="startCheckout(false)">Subscribe Now</button>
+      </div>
+    </div>
+    <div class="plan-loading" id="plan-loading">Redirecting to checkout...</div>
   </div>
 </div>
 
@@ -449,7 +495,7 @@
           <li>Refine responses with AI chat</li>
           <li>Works on Google Business Profile & Search</li>
         </ul>
-        <a href="#auth" class="pricing-btn outline">Start Free Trial</a>
+        <button class="pricing-btn outline" onclick="handlePricingClick('trial')">Start Free Trial</button>
       </div>
       <div class="pricing-card featured fade-up">
         <div class="pricing-name">Pro</div>
@@ -465,7 +511,7 @@
           <li>Custom instructions per profile</li>
           <li>Priority support</li>
         </ul>
-        <a href="#auth" class="pricing-btn filled">Start Free Trial</a>
+        <button class="pricing-btn filled" onclick="handlePricingClick('pro')">Subscribe Now — $29/mo</button>
       </div>
     </div>
   </div>
@@ -483,7 +529,7 @@
       <div class="faq-item"><button class="faq-q">How does the SMS alert system work? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper uses Twilio to send you a text message the moment a new review appears on your Google Business Profile. The SMS includes the reviewer's name, star rating, and the first part of their review so you know exactly what you're dealing with before you open your computer.</div></div>
       <div class="faq-item"><button class="faq-q">What are "keywords" and why do they matter? <span class="faq-arrow">+</span></button><div class="faq-a">Keywords in review responses are words like your city name, business name, and services. When Google indexes your review replies, it picks up these keywords and uses them to understand what your business does and where it's located — which helps you rank for those terms in local search.</div></div>
       <div class="faq-item"><button class="faq-q">Does it work on Google Maps? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper works on Google Business Profile (business.google.com) and Google Search results pages. The Draft AI Response button appears wherever your reviews appear on those platforms.</div></div>
-<div class="faq-item"><button class="faq-q">Can I manage multiple business locations? <span class="faq-arrow">+</span></button><div class="faq-a">Yes. With the Pro plan you can create up to 10 separate business profiles, each with their own business name, city, services, tone, and custom instructions. Switch between them instantly from the extension popup.</div></div>
+      <div class="faq-item"><button class="faq-q">Can I manage multiple business locations? <span class="faq-arrow">+</span></button><div class="faq-a">Yes. With the Pro plan you can create up to 10 separate business profiles, each with their own business name, city, services, tone, and custom instructions. Switch between them instantly from the extension popup.</div></div>
       <div class="faq-item"><button class="faq-q">What is the SEO score? <span class="faq-arrow">+</span></button><div class="faq-a">Every AI-generated response gets scored out of 100 based on factors like length, personalization, keyword inclusion, call to action, and whether it avoids generic AI phrases. A score of 90+ means your response is highly optimized.</div></div>
     </div>
   </div>
@@ -577,6 +623,7 @@
 
 <script>
 const API = '';
+let currentToken = null;
 
 // Check for reset token in URL on page load
 window.addEventListener('load', () => {
@@ -585,7 +632,6 @@ window.addEventListener('load', () => {
   if (resetToken) {
     document.getElementById('reset-modal').classList.add('active');
     window.currentResetToken = resetToken;
-    // Clean URL
     window.history.replaceState({}, '', '/');
   }
 });
@@ -627,12 +673,51 @@ document.getElementById('reset-submit-btn').addEventListener('click', async () =
   }
 });
 
-// Close modal on overlay click
 document.getElementById('reset-modal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('reset-modal')) {
     document.getElementById('reset-modal').classList.remove('active');
   }
 });
+
+// Show plan picker — called from pricing buttons or after login
+function handlePricingClick(preference) {
+  const token = localStorage.getItem('rs_token');
+  if (!token) {
+    document.getElementById('auth').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  currentToken = token;
+  document.getElementById('plan-modal').classList.add('active');
+}
+
+async function startCheckout(trial) {
+  const token = currentToken || localStorage.getItem('rs_token');
+  if (!token) return;
+
+  document.getElementById('plan-loading').style.display = 'block';
+  document.getElementById('btn-trial').disabled = true;
+  document.getElementById('btn-pro').disabled = true;
+
+  try {
+    const res = await fetch('/api/stripe/create-checkout', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trial })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      document.getElementById('plan-loading').textContent = 'Something went wrong. Please try again.';
+      document.getElementById('btn-trial').disabled = false;
+      document.getElementById('btn-pro').disabled = false;
+    }
+  } catch (err) {
+    document.getElementById('plan-loading').textContent = 'Network error. Please try again.';
+    document.getElementById('btn-trial').disabled = false;
+    document.getElementById('btn-pro').disabled = false;
+  }
+}
 
 function switchTab(name) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -700,19 +785,15 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem('rs_token', data.token);
-      showMsg('login-msg', '✓ Logged in! Redirecting...', 'success');
-      // If no plan, redirect to Stripe to start trial
+      currentToken = data.token;
       if (data.user.plan === 'free' || !data.user.plan) {
-        setTimeout(async () => {
-          const checkoutRes = await fetch('/api/stripe/create-checkout', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + data.token, 'Content-Type': 'application/json' }
-          });
-          const checkoutData = await checkoutRes.json();
-          if (checkoutData.url) window.location.href = checkoutData.url;
-          else window.location.href = '/dashboard.html';
-        }, 1000);
+        // Show plan picker modal instead of auto-redirecting
+        showMsg('login-msg', '✓ Logged in! Choose your plan below.', 'success');
+        setTimeout(() => {
+          document.getElementById('plan-modal').classList.add('active');
+        }, 800);
       } else {
+        showMsg('login-msg', '✓ Logged in! Redirecting...', 'success');
         setTimeout(() => window.location.href = '/dashboard.html', 1500);
       }
     } else {
