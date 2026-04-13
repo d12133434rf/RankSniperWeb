@@ -172,6 +172,45 @@
     </div>
   </div>
 
+  <!-- Request Review -->
+  <div class="section">
+    <div class="section-title"><span>⭐</span> Request a Google Review <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
+    <p style="font-size:14px;color:var(--subtle);margin-bottom:20px;">Send a customer a text message asking them to leave you a Google review. Just enter their name, phone number, and your Google review link.</p>
+    <div id="review-request-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Name</label>
+          <input type="text" class="phone-input" id="customer-name" placeholder="e.g. Sarah">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Phone</label>
+          <input type="tel" class="phone-input" id="customer-phone" placeholder="+1 (555) 000-0000">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Your Google Review Link</label>
+        <input type="url" class="phone-input" id="review-link" placeholder="https://g.page/r/your-business/review">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Business Name (for the SMS)</label>
+        <input type="text" class="phone-input" id="sms-business-name" placeholder="e.g. John's Pizza">
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--subtle);line-height:1.6;">
+        <strong style="color:var(--text);display:block;margin-bottom:6px;">📱 Preview SMS:</strong>
+        <span id="sms-preview">Hi [Customer]! Thanks for visiting [Business]. We hope you had a great experience! If you did, we'd really appreciate a quick Google review — it helps us a lot 🙏<br><br>[Review Link]<br><br>Thank you! 😊</span>
+      </div>
+      <button class="phone-btn" onclick="sendReviewRequest()" id="send-review-btn">Send Review Request</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;">By sending, you confirm the customer has verbally agreed to receive a text from your business.</p>
+      <div class="msg" id="review-msg"></div>
+    </div>
+
+    <!-- Recent requests -->
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--subtle);margin-bottom:12px;">Recent Requests</div>
+      <div id="requests-list" style="font-size:13px;color:var(--muted);">Loading...</div>
+    </div>
+  </div>
+
   <!-- Account info -->
   <div class="section">
     <div class="section-title"><span>👤</span> Account</div>
@@ -274,7 +313,77 @@ function logout() {
   window.location.href = '/';
 }
 
+// Update SMS preview as user types
+['customer-name', 'sms-business-name', 'review-link'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateSMSPreview);
+});
+
+function updateSMSPreview() {
+  const name = document.getElementById('customer-name').value.trim().split(' ')[0] || '[Customer]';
+  const biz = document.getElementById('sms-business-name').value.trim() || '[Business]';
+  const link = document.getElementById('review-link').value.trim() || '[Review Link]';
+  document.getElementById('sms-preview').innerHTML = `Hi ${name}! Thanks for visiting ${biz}. We hope you had a great experience! If you did, we'd really appreciate a quick Google review — it helps us a lot 🙏<br><br>${link}<br><br>Thank you! 😊`;
+}
+
+async function sendReviewRequest() {
+  const customerName = document.getElementById('customer-name').value.trim();
+  const customerPhone = document.getElementById('customer-phone').value.trim();
+  const reviewLink = document.getElementById('review-link').value.trim();
+  const businessName = document.getElementById('sms-business-name').value.trim();
+  const msg = document.getElementById('review-msg');
+  const btn = document.getElementById('send-review-btn');
+
+  if (!customerPhone) { msg.textContent = 'Please enter a customer phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  if (!reviewLink) { msg.textContent = 'Please enter your Google review link'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch(API + '/api/sms/request-review', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerName, customerPhone, reviewLink, businessName })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.textContent = '✓ Review request sent to ' + customerPhone + '!';
+      msg.className = 'msg success'; msg.style.display = 'block';
+      document.getElementById('customer-name').value = '';
+      document.getElementById('customer-phone').value = '';
+      loadReviewRequests();
+    } else {
+      msg.textContent = data.error || 'Failed to send';
+      msg.className = 'msg error'; msg.style.display = 'block';
+    }
+  } catch (err) {
+    msg.textContent = 'Network error. Please try again.';
+    msg.className = 'msg error'; msg.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send Review Request';
+  }
+}
+
+async function loadReviewRequests() {
+  const token = localStorage.getItem('rs_token');
+  const list = document.getElementById('requests-list');
+  try {
+    const res = await fetch(API + '/api/sms/requests', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (!data.length) { list.textContent = 'No requests sent yet.'; return; }
+    list.innerHTML = data.map(r => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>${r.customer_name || 'Unknown'} — ${r.customer_phone}</span>
+        <span style="color:var(--muted)">${new Date(r.sent_at).toLocaleDateString()}</span>
+      </div>
+    `).join('');
+  } catch (err) {
+    list.textContent = 'Could not load requests.';
+  }
+}
+
 init();
+loadReviewRequests();
 </script>
 </body>
 </html>
