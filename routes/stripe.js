@@ -152,6 +152,40 @@ router.post('/webhook', async (req, res) => {
     }
   }
 
+  // Fires immediately when user cancels — cancel_at_period_end becomes true
+  if (event.type === 'customer.subscription.updated') {
+    const customerId = session.customer;
+    if (customerId && session.cancel_at_period_end === true) {
+      console.log('Subscription set to cancel at period end for:', customerId);
+      const { data: user } = await supabase
+        .from('users')
+        .select('email')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (user?.email) {
+        await sendEmail(
+          user.email,
+          'Your RankSniper subscription has been cancelled',
+          `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+            <h2 style="color:#ef4444;">Subscription Cancelled</h2>
+            <p>Hi there,</p>
+            <p>Your RankSniper Pro subscription has been cancelled. You will keep access to Pro features until the end of your current billing period.</p>
+            <p>If you cancelled by mistake or change your mind, you can resubscribe anytime.</p>
+            <a href="${process.env.FRONTEND_URL}/#pricing" 
+               style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
+              Resubscribe
+            </a>
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactranksniper@gmail.com</p>
+            <p style="color:#6b7280;font-size:14px;">— The RankSniper Team</p>
+          </div>
+          `
+        );
+      }
+    }
+  }
+
   if (event.type === 'customer.subscription.deleted' ||
       event.type === 'invoice.payment_failed') {
     const customerId = session.customer;
@@ -167,13 +201,13 @@ router.post('/webhook', async (req, res) => {
       if (user?.email) {
         await sendEmail(
           user.email,
-          'Your RankSniper subscription has been cancelled',
+          'Your RankSniper Pro access has ended',
           `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-            <h2 style="color:#ef4444;">Subscription Cancelled</h2>
+            <h2 style="color:#ef4444;">Pro Access Ended</h2>
             <p>Hi there,</p>
-            <p>Your RankSniper Pro subscription has been cancelled. You will lose access to Pro features at the end of your current billing period.</p>
-            <p>If you cancelled by mistake or change your mind, you can resubscribe anytime.</p>
+            <p>Your RankSniper Pro access has ended. You no longer have access to Pro features.</p>
+            <p>You can resubscribe anytime to regain access.</p>
             <a href="${process.env.FRONTEND_URL}/#pricing" 
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Resubscribe
