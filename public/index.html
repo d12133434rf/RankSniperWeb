@@ -777,6 +777,15 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
     showMsg('signup-msg', 'Please agree to the Terms of Service and Privacy Policy to continue.', 'error');
     return;
   }
+  let phoneVal = document.getElementById('signup-phone').value.trim();
+  if (phoneVal) {
+    const digits = phoneVal.replace(/\D/g, '');
+    if (digits.length === 10) phoneVal = '+1' + digits;
+    else if (digits.length === 11 && digits.startsWith('1')) phoneVal = '+' + digits;
+    else if (digits.length >= 11) phoneVal = '+' + digits;
+    else { showMsg('signup-msg', 'Please enter a valid 10-digit US phone number, e.g. 8728885275', 'error'); return; }
+    document.getElementById('signup-phone').value = phoneVal;
+  }
   const btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.textContent = 'Creating account...';
   try {
