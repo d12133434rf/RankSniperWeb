@@ -121,12 +121,20 @@
     </div>
   </div>
 
-  <div class="upgrade-card" id="upgrade-banner" style="display:none;">
-    <div class="upgrade-text">
-      <h3>Start your free 7-day trial</h3>
-      <p>Full access to all features. Enter your card — you won't be charged for 7 days.</p>
+  <div id="upgrade-banner" style="display:none;gap:16px;margin-bottom:20px;grid-template-columns:1fr 1fr;">
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(59,130,246,0.05));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;">Free Trial</div>
+      <div style="font-size:13px;color:var(--subtle);">Full access for 7 days. No charge until trial ends. Cancel anytime.</div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$0 <span style="font-size:13px;font-weight:400;color:var(--muted);">for 7 days</span></div>
+      <button class="upgrade-btn" id="trial-btn" onclick="startUpgrade(true)" style="width:100%;margin-top:4px;">Start Free Trial</button>
     </div>
-    <button class="upgrade-btn" onclick="upgrade()">Start Free Trial</button>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(59,130,246,0.05));border:2px solid rgba(99,102,241,0.5);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;position:relative;">
+      <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;">Most Popular</div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;">Pro</div>
+      <div style="font-size:13px;color:var(--subtle);">Skip the trial. Full Pro access starting today.</div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$29 <span style="font-size:13px;font-weight:400;color:var(--muted);">/month</span></div>
+      <button class="upgrade-btn" id="pro-btn" onclick="startUpgrade(false)" style="width:100%;margin-top:4px;">Subscribe Now</button>
+    </div>
   </div>
 
   <div class="section">
@@ -267,13 +275,10 @@ function renderDashboard(user) {
   } else if (isExpired) {
     document.getElementById('plan-display').textContent = 'Expired';
     document.getElementById('plan-display').style.color = '#ef4444';
-    document.getElementById('upgrade-banner').style.display = 'flex';
-    document.getElementById('upgrade-banner').querySelector('h3').textContent = 'Your trial has ended';
-    document.getElementById('upgrade-banner').querySelector('p').textContent = 'Subscribe to Pro to continue using RankSniper.';
-    document.getElementById('upgrade-banner').querySelector('button').textContent = 'Subscribe — $29/mo';
+    document.getElementById('upgrade-banner').style.display = 'grid';
   } else {
     document.getElementById('plan-display').textContent = 'No Plan';
-    document.getElementById('upgrade-banner').style.display = 'flex';
+    document.getElementById('upgrade-banner').style.display = 'grid';
   }
 
   document.getElementById('usage-display').textContent = user.usage_count || 0;
@@ -327,6 +332,14 @@ async function loadBilling(user) {
     document.getElementById('billing-status').textContent = data.cancel_at_period_end
       ? '⚠️ Cancels at period end'
       : (statusMap[data.status] || data.status);
+
+    // Show upgrade banner for trialing users (only pro button, no trial button)
+    if (data.status === 'trialing' && !data.cancel_at_period_end) {
+      const banner = document.getElementById('upgrade-banner');
+      banner.style.display = 'grid';
+      const trialBtn = document.getElementById('trial-btn');
+      if (trialBtn) trialBtn.closest('div[style]').style.display = 'none';
+    }
 
     if (data.status === 'canceled') {
       document.getElementById('billing-date').textContent = 'Subscription ended';
@@ -385,12 +398,13 @@ async function savePhone() {
   } catch (err) { msg.textContent = 'Network error.'; msg.className = 'msg error'; msg.style.display = 'block'; }
 }
 
-async function upgrade() {
+async function startUpgrade(trial) {
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch(API + '/api/stripe/create-checkout', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trial: trial !== false })
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
