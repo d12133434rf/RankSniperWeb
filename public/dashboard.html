@@ -201,7 +201,7 @@ Thank you!</textarea>
     <div style="margin-top:20px;">
       <button class="phone-btn" onclick="openBillingPortal()" id="billing-portal-btn">Manage Subscription</button>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin-top:12px;">To cancel, click "Manage Subscription" and select Cancel, or email contactranksniper@gmail.com.</p>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px;">To cancel, click "Manage Subscription" and select Cancel, or email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3d0dcddc7d2d0c7c1d2ddd8c0dddac3d6c1f3d4ded2dadf9dd0dcde">[email&#160;protected]</a>.</p>
   </div>
 
   <div class="section">
@@ -213,7 +213,7 @@ Thank you!</textarea>
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const API = '';
 let userData = null;
 
@@ -362,6 +362,11 @@ async function savePhone() {
   const phone = document.getElementById('phone-input').value.trim();
   const msg = document.getElementById('phone-msg');
   if (!phone) { msg.textContent = 'Please enter a phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) phone = '+1' + digits;
+  else if (digits.length === 11 && digits.startsWith('1')) phone = '+' + digits;
+  else if (digits.length >= 11) phone = '+' + digits;
+  else { msg.textContent = 'Please enter a valid 10-digit US phone number, e.g. 8728885275'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch(API + '/api/user/phone', {
@@ -459,13 +464,4 @@ async function loadReviewRequests() {
     list.innerHTML = data.map(r =>
       '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">' +
       '<span>' + (r.customer_name || 'Unknown') + ' — ' + r.customer_phone + '</span>' +
-      '<span style="color:var(--muted)">' + new Date(r.sent_at).toLocaleDateString() + '</span></div>'
-    ).join('');
-  } catch (err) { list.textContent = 'Could not load requests.'; }
-}
-
-init();
-loadReviewRequests();
-</script>
-</body>
-</html>
+      '
