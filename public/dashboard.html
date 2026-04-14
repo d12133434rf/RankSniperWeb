@@ -123,8 +123,8 @@
 
   <div class="upgrade-card" id="upgrade-banner" style="display:none;">
     <div class="upgrade-text">
-      <h3>Start your free 30-day trial</h3>
-      <p>Full access to all features. Enter your card — you won't be charged for 30 days.</p>
+      <h3>Start your free 7-day trial</h3>
+      <p>Full access to all features. Enter your card — you won't be charged for 7 days.</p>
     </div>
     <button class="upgrade-btn" onclick="upgrade()">Start Free Trial</button>
   </div>
@@ -228,19 +228,17 @@ async function init() {
   const token = localStorage.getItem('rs_token');
   if (!token) { window.location.href = '/#auth'; return; }
 
-  // Try up to 2 times in case of network hiccup
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetch(API + '/api/user/me', { headers: { 'Authorization': 'Bearer ' + token } });
       if (res.status === 401) {
-        // Only log out on explicit 401 (invalid token), not other errors
         localStorage.removeItem('rs_token');
         window.location.href = '/#auth';
         return;
       }
       if (!res.ok) {
         if (attempt === 0) { await new Promise(r => setTimeout(r, 1000)); continue; }
-        return; // Don't log out on server errors
+        return;
       }
       userData = await res.json();
       renderDashboard(userData);
@@ -260,7 +258,6 @@ function renderDashboard(user) {
   const isPro = user.plan === 'pro';
   const isExpired = user.plan === 'expired';
 
-  // Top cards
   if (isPro) {
     document.getElementById('plan-display').textContent = 'Pro ✨';
   } else if (isExpired) {
@@ -278,7 +275,6 @@ function renderDashboard(user) {
   document.getElementById('usage-display').textContent = user.usage_count || 0;
   document.getElementById('usage-sub').textContent = isPro ? 'Unlimited responses' : 'responses used';
 
-  // Account section
   document.getElementById('profile-email').textContent = user.email;
   document.getElementById('profile-plan').innerHTML = isPro
     ? '<span class="plan-badge pro">Pro</span>'
@@ -289,7 +285,6 @@ function renderDashboard(user) {
   if (user.phone) document.getElementById('phone-input').value = user.phone;
   if (user.created_at) document.getElementById('profile-since').textContent = new Date(user.created_at).toLocaleDateString();
 
-  // Load billing
   loadBilling(user);
 }
 
@@ -395,7 +390,6 @@ async function upgrade() {
 
 function logout() { localStorage.removeItem('rs_token'); window.location.href = '/'; }
 
-// SMS preview
 ['customer-name', 'sms-business-name', 'review-link'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updateSMSPreview);
