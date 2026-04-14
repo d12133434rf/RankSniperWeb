@@ -64,7 +64,7 @@ router.post('/signup', async (req, res) => {
     if (error) throw error;
 
     const verifyUrl = `${process.env.RAILWAY_URL || 'https://ranksniperweb-production.up.railway.app'}/api/auth/verify?token=${verificationToken}`;
-    
+
     await sendEmail(email, 'Verify your RankSniper account', `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
         <h2 style="color:#3b82f6;">Welcome to RankSniper!</h2>
@@ -129,6 +129,21 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed. Please try again.' });
+  }
+});
+
+// GET /api/auth/me - verify token and return fresh user data
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'No token' });
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { data: user } = await supabase.from('users').select('id, email, plan').eq('id', decoded.id).single();
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
   }
 });
 
