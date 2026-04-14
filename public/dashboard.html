@@ -122,7 +122,7 @@
   </div>
 
   <div id="upgrade-banner" style="display:none;gap:16px;margin-bottom:20px;grid-template-columns:1fr 1fr;">
-    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(59,130,246,0.05));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;">
+    <div id="trial-card" style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(59,130,246,0.05));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;">
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;">Free Trial</div>
       <div style="font-size:13px;color:var(--subtle);">Full access for 7 days. No charge until trial ends. Cancel anytime.</div>
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$0 <span style="font-size:13px;font-weight:400;color:var(--muted);">for 7 days</span></div>
@@ -333,12 +333,13 @@ async function loadBilling(user) {
       ? '⚠️ Cancels at period end'
       : (statusMap[data.status] || data.status);
 
-    // Show upgrade banner for trialing users (only pro button, no trial button)
+    // Show upgrade banner for trialing users — hide free trial card, show pro only
     if (data.status === 'trialing' && !data.cancel_at_period_end) {
       const banner = document.getElementById('upgrade-banner');
       banner.style.display = 'grid';
-      const trialBtn = document.getElementById('trial-btn');
-      if (trialBtn) trialBtn.closest('div[style]').style.display = 'none';
+      banner.style.gridTemplateColumns = '1fr';
+      const trialCard = document.getElementById('trial-card');
+      if (trialCard) trialCard.style.display = 'none';
     }
 
     if (data.status === 'canceled') {
