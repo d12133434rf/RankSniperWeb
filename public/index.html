@@ -782,7 +782,7 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
     const digits = phoneVal.replace(/[^0-9]/g, '');
     if (digits.length === 10) phoneVal = '+1' + digits;
     else if (digits.length === 11 && digits.startsWith('1')) phoneVal = '+' + digits;
-    else { showMsg('signup-msg', 'Please enter a valid 10-digit US phone number, e.g. 8728885275', 'error'); return; }
+    else { showMsg('signup-msg', 'Please enter a valid 10-digit US phone number, e.g. 5328883471', 'error'); return; }
     document.getElementById('signup-phone').value = phoneVal;
   }
   const btn = document.getElementById('signup-btn');
