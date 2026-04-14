@@ -553,6 +553,12 @@
         <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="signup-password" placeholder="Create a password (min 6 chars)" required></div>
         <div class="form-group"><label class="form-label">Business Name</label><input type="text" class="form-input" id="signup-business" placeholder="e.g. John's Pizza"></div>
         <div class="form-group"><label class="form-label">Phone Number <span style="color:var(--muted);font-weight:400;text-transform:none;">(for SMS review alerts)</span></label><input type="tel" class="form-input" id="signup-phone" placeholder="+1 (555) 000-0000"></div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--subtle);font-weight:400;text-transform:none;letter-spacing:0;">
+            <input type="checkbox" id="terms-checkbox" style="margin-top:3px;accent-color:var(--accent);flex-shrink:0;">
+            I agree to the <a href="/terms.html" target="_blank" style="color:var(--accent);text-decoration:none;">Terms of Service</a> and <a href="/privacy.html" target="_blank" style="color:var(--accent);text-decoration:none;">Privacy Policy</a>
+          </label>
+        </div>
         <button type="submit" class="auth-btn" id="signup-btn">Create Free Account</button>
         <div class="auth-msg" id="signup-msg"></div>
       </form>
@@ -767,6 +773,10 @@ function showMsg(id, text, type) {
 
 document.getElementById('form-signup').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!document.getElementById('terms-checkbox').checked) {
+    showMsg('signup-msg', 'Please agree to the Terms of Service and Privacy Policy to continue.', 'error');
+    return;
+  }
   const btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.textContent = 'Creating account...';
   try {
