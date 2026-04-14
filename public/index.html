@@ -585,7 +585,7 @@
       <div class="contact-info fade-up">
         <h3>Get in touch</h3>
         <p>Have a question about RankSniper? Want to report a bug or request a feature? We respond to every message within 24 hours.</p>
-        <div class="contact-detail"><span>📧</span> contactranksniper<!-- -->@gmail.com</div>
+        <div class="contact-detail"><span>📧</span> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d1b2bebfa5b0b2a5a3b0bfbaa2bfb8a1b4a391b6bcb0b8bdffb2bebc">[email&#160;protected]</a></div>
         <div class="contact-detail"><span>💬</span> Average response time: under 24 hours</div>
         <div class="contact-detail"><span>🕐</span> Support hours: Mon–Fri, 9am–6pm PST</div>
       </div>
@@ -625,7 +625,7 @@
 const API = '';
 let currentToken = null;
 
-// Check for reset token in URL on page load
+// Check for reset token or auto-redirect logged-in users on page load
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get('reset_token');
@@ -633,6 +633,13 @@ window.addEventListener('load', () => {
     document.getElementById('reset-modal').classList.add('active');
     window.currentResetToken = resetToken;
     window.history.replaceState({}, '', '/');
+    return;
+  }
+  // Auto-redirect to dashboard if already logged in
+  const token = localStorage.getItem('rs_token');
+  if (token) {
+    window.location.href = '/dashboard.html';
+    return;
   }
 });
 
@@ -807,9 +814,15 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
         setTimeout(() => {
           document.getElementById('plan-modal').classList.add('active');
         }, 800);
-      } else {
+      } else if (data.user.plan === 'pro') {
         showMsg('login-msg', '✓ Logged in! Redirecting...', 'success');
         setTimeout(() => window.location.href = '/dashboard.html', 1500);
+      } else {
+        // expired or unknown plan — show plan picker
+        showMsg('login-msg', '✓ Logged in! Choose your plan below.', 'success');
+        setTimeout(() => {
+          document.getElementById('plan-modal').classList.add('active');
+        }, 800);
       }
     } else {
       showMsg('login-msg', data.error || 'Login failed', 'error');
