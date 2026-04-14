@@ -591,7 +591,7 @@
       <div class="contact-info fade-up">
         <h3>Get in touch</h3>
         <p>Have a question about RankSniper? Want to report a bug or request a feature? We respond to every message within 24 hours.</p>
-        <div class="contact-detail"><span>📧</span><span id="contact-email-display"></span></div>
+        <div class="contact-detail" id="contact-email-row"></div>
         <div class="contact-detail"><span>💬</span> Average response time: under 24 hours</div>
         <div class="contact-detail"><span>🕐</span> Support hours: Mon–Fri, 9am–6pm PST</div>
       </div>
@@ -898,7 +898,8 @@ document.querySelectorAll('.faq-q').forEach(btn => {
   });
 });
 
-document.getElementById('contact-email-display').textContent = ' contactranksniper' + '@' + 'gmail.com';
+var emailRow = document.getElementById('contact-email-row');
+emailRow.innerHTML = '<span style="width:36px;height:36px;background:rgba(59,130,246,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📧</span>' + ('contactranksniper' + '@' + 'gmail.com');
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
