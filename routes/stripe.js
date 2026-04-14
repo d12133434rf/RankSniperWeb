@@ -69,12 +69,10 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
 
     // Only add trial if explicitly requested
     if (trial !== false) {
-      sessionConfig.subscription_data = { trial_period_days: 30 };
+      sessionConfig.subscription_data = { trial_period_days: 7 };
     }
 
-    sessionConfig.allow_promotion_codes = true;
     const session = await stripe.checkout.sessions.create(sessionConfig);
-    
     res.json({ url: session.url });
   } catch (err) {
     console.error('Stripe checkout error:', err);
