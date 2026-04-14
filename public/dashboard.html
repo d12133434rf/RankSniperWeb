@@ -334,7 +334,7 @@ async function loadBilling(user) {
       : (statusMap[data.status] || data.status);
 
     // Show upgrade banner for trialing users — hide free trial card, show pro card only
-    if (data.status === 'trialing' && !data.cancel_at_period_end) {
+    if (data.status === 'trialing') {
       const banner = document.getElementById('upgrade-banner');
       banner.style.display = 'grid';
       banner.style.gridTemplateColumns = '1fr';
@@ -342,7 +342,7 @@ async function loadBilling(user) {
       const trialCard = document.getElementById('trial-card');
       if (trialCard) trialCard.style.display = 'none';
       const proBtn = document.getElementById('pro-btn');
-      if (proBtn) proBtn.textContent = 'Upgrade to Pro — $29/mo';
+      if (proBtn) proBtn.textContent = data.cancel_at_period_end ? 'Resubscribe — $29/mo' : 'Upgrade to Pro — $29/mo';
     }
 
     if (data.status === 'canceled') {
