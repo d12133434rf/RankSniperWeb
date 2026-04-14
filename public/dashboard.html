@@ -371,7 +371,6 @@ async function savePhone() {
   const digits = phone.replace(/[^0-9]/g, '');
   if (digits.length === 10) phone = '+1' + digits;
   else if (digits.length === 11 && digits.startsWith('1')) phone = '+' + digits;
-  else if (digits.length >= 11) phone = '+' + digits;
   else { msg.textContent = 'Please enter a valid 10-digit US phone number, e.g. 8728885275'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
   const token = localStorage.getItem('rs_token');
   try {
