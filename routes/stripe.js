@@ -6,31 +6,16 @@ const authMiddleware = require('../middleware/auth');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-// Resend HTTP API
 async function sendEmail(to, subject, html) {
   try {
-    console.log('Attempting to send email to:', to);
-    if (!process.env.RESEND_API_KEY) {
-      console.log('RESEND_API_KEY not set, skipping email to:', to);
-      return false;
-    }
+    if (!process.env.RESEND_API_KEY) return false;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
-      },
-      body: JSON.stringify({
-        from: 'RankSniper <no-reply@getranksniper.com>',
-        to: [to],
-        subject,
-        html
-      })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.RESEND_API_KEY}` },
+      body: JSON.stringify({ from: 'RankSniper <no-reply@getranksniper.com>', to: [to], subject, html })
     });
     const data = await res.json();
-    console.log('Resend API response:', JSON.stringify(data));
     if (!res.ok) throw new Error(JSON.stringify(data));
-    console.log('Email sent successfully to:', to);
     return true;
   } catch (e) {
     console.error('Email send error:', e.message);
@@ -38,7 +23,37 @@ async function sendEmail(to, subject, html) {
   }
 }
 
-// POST /api/stripe/create-checkout - create Stripe checkout session
+// Check if a card fingerprint has already been used for a trial
+async function hasCardUsedTrial(fingerprint) {
+  if (!fingerprint) return false;
+  const { data } = await supabase
+    .from('used_trial_fingerprints')
+    .select('id')
+    .eq('card_fingerprint', fingerprint)
+    .single();
+  return !!data;
+}
+
+// Save card fingerprint after trial starts
+async function saveTrialFingerprint(fingerprint, email) {
+  if (!fingerprint) return;
+  await supabase.from('used_trial_fingerprints').upsert({
+    card_fingerprint: fingerprint,
+    email
+  }, { onConflict: 'card_fingerprint' });
+}
+
+// Get card fingerprint for a Stripe customer
+async function getCardFingerprint(customerId) {
+  try {
+    const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
+    return paymentMethods.data[0]?.card?.fingerprint || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// POST /api/stripe/create-checkout
 router.post('/create-checkout', authMiddleware, async (req, res) => {
   try {
     const { trial } = req.body;
@@ -57,32 +72,14 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
       await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', req.user.id);
     }
 
-    // Check if user already used a trial via Stripe
-    let alreadyUsedTrial = user.had_trial === true;
+    // Check 1: had_trial flag in Supabase (same account)
+    let blockTrial = user.had_trial === true;
 
-    if (!alreadyUsedTrial && trial !== false) {
-      // Check Stripe for any previous subscriptions with trial
-      const previousSubs = await stripe.subscriptions.list({
-        customer: customerId,
-        status: 'all',
-        limit: 10
-      });
-      alreadyUsedTrial = previousSubs.data.some(sub => sub.trial_end !== null);
-
-      // Also check if any other Stripe customer shares the same card fingerprint
-      const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
-      if (paymentMethods.data.length > 0) {
-        const fingerprint = paymentMethods.data[0].card.fingerprint;
-        if (fingerprint) {
-          // Search for other customers with same card fingerprint
-          const allCustomers = await stripe.customers.search({
-            query: `metadata['cardFingerprint']:'${fingerprint}'`,
-            limit: 5
-          });
-          if (allCustomers.data.some(c => c.id !== customerId)) {
-            alreadyUsedTrial = true;
-          }
-        }
+    // Check 2: card fingerprint (different account, same card)
+    if (!blockTrial && trial !== false) {
+      const fingerprint = await getCardFingerprint(customerId);
+      if (fingerprint) {
+        blockTrial = await hasCardUsedTrial(fingerprint);
       }
     }
 
@@ -96,20 +93,19 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
       cancel_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/#pricing',
     };
 
-    // Only add trial if explicitly requested AND user hasn't used one before
-    if (trial !== false && !alreadyUsedTrial) {
+    if (trial !== false && !blockTrial) {
       sessionConfig.subscription_data = { trial_period_days: 7 };
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
-    res.json({ url: session.url, hadTrial: alreadyUsedTrial });
+    res.json({ url: session.url, hadTrial: blockTrial });
   } catch (err) {
     console.error('Stripe checkout error:', err);
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
 
-// POST /api/stripe/webhook - handle Stripe events
+// POST /api/stripe/webhook
 router.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -126,7 +122,6 @@ router.post('/webhook', async (req, res) => {
 
   if (event.type === 'checkout.session.completed') {
     const customerId = session.customer;
-    console.log('checkout.session.completed fired, customerId:', customerId);
     if (customerId) {
       await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
 
@@ -136,27 +131,18 @@ router.post('/webhook', async (req, res) => {
         .eq('stripe_customer_id', customerId)
         .single();
 
-      console.log('User found in Supabase:', user);
-
       if (user?.email) {
-        const isTrial = session.subscription ? true : false;
+        const isTrial = !!(session.subscription);
 
-        // Store card fingerprint to prevent future trial abuse
-        if (session.payment_intent || session.setup_intent) {
-          try {
-            const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
-            if (paymentMethods.data.length > 0) {
-              const fingerprint = paymentMethods.data[0].card.fingerprint;
-              await stripe.customers.update(customerId, { metadata: { cardFingerprint: fingerprint } });
-            }
-          } catch (e) {
-            console.error('Error storing card fingerprint:', e.message);
-          }
-        }
-
-        // Mark that this user has used a trial
         if (isTrial) {
+          // Mark had_trial in users table
           await supabase.from('users').update({ had_trial: true }).eq('stripe_customer_id', customerId);
+
+          // Save card fingerprint to block same card on future accounts
+          const fingerprint = await getCardFingerprint(customerId);
+          if (fingerprint) {
+            await saveTrialFingerprint(fingerprint, user.email);
+          }
         }
 
         await sendEmail(
@@ -178,7 +164,7 @@ router.post('/webhook', async (req, res) => {
               <li>✅ All future features included</li>
             </ul>
             <p>You can manage or cancel your subscription anytime from your dashboard.</p>
-            <a href="${process.env.FRONTEND_URL}/dashboard.html" 
+            <a href="${process.env.FRONTEND_URL}/dashboard.html"
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Go to Dashboard
             </a>
@@ -187,8 +173,6 @@ router.post('/webhook', async (req, res) => {
           </div>
           `
         );
-      } else {
-        console.log('No user found in Supabase for customerId:', customerId);
       }
     }
   }
@@ -204,7 +188,6 @@ router.post('/webhook', async (req, res) => {
   if (event.type === 'customer.subscription.updated') {
     const customerId = session.customer;
     if (customerId && session.cancel_at_period_end === true) {
-      console.log('Subscription set to cancel at period end for:', customerId);
       const { data: user } = await supabase
         .from('users')
         .select('email')
@@ -221,7 +204,7 @@ router.post('/webhook', async (req, res) => {
             <p>Hi there,</p>
             <p>Your RankSniper Pro subscription has been cancelled. You will keep access to Pro features until the end of your current billing period.</p>
             <p>If you cancelled by mistake or change your mind, you can resubscribe anytime.</p>
-            <a href="${process.env.FRONTEND_URL}/#pricing" 
+            <a href="${process.env.FRONTEND_URL}/#pricing"
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Resubscribe
             </a>
@@ -256,7 +239,7 @@ router.post('/webhook', async (req, res) => {
             <p>Hi there,</p>
             <p>Your RankSniper Pro access has ended. You no longer have access to Pro features.</p>
             <p>You can resubscribe anytime to regain access.</p>
-            <a href="${process.env.FRONTEND_URL}/#pricing" 
+            <a href="${process.env.FRONTEND_URL}/#pricing"
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Resubscribe
             </a>
