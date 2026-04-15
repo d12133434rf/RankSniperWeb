@@ -23,7 +23,6 @@ async function sendEmail(to, subject, html) {
   }
 }
 
-// Check if a card fingerprint has already been used for a trial
 async function hasCardUsedTrial(fingerprint) {
   if (!fingerprint) return false;
   const { data } = await supabase
@@ -34,7 +33,6 @@ async function hasCardUsedTrial(fingerprint) {
   return !!data;
 }
 
-// Save card fingerprint after trial starts
 async function saveTrialFingerprint(fingerprint, email) {
   if (!fingerprint) return;
   await supabase.from('used_trial_fingerprints').upsert({
@@ -43,7 +41,6 @@ async function saveTrialFingerprint(fingerprint, email) {
   }, { onConflict: 'card_fingerprint' });
 }
 
-// Get card fingerprint for a Stripe customer
 async function getCardFingerprint(customerId) {
   try {
     const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
@@ -75,7 +72,7 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
     // Check 1: had_trial flag in Supabase (same account)
     let blockTrial = user.had_trial === true;
 
-    // Check 2: card fingerprint (different account, same card)
+    // Check 2: card fingerprint for existing customers (different account, same card)
     if (!blockTrial && trial !== false) {
       const fingerprint = await getCardFingerprint(customerId);
       if (fingerprint) {
@@ -91,10 +88,15 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
       allow_promotion_codes: true,
       success_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/dashboard.html?upgraded=true',
       cancel_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/#pricing',
+      // Store whether trial was requested so webhook can check it
+      metadata: { trial_requested: trial !== false ? 'true' : 'false' }
     };
 
     if (trial !== false && !blockTrial) {
-      sessionConfig.subscription_data = { trial_period_days: 7 };
+      sessionConfig.subscription_data = {
+        trial_period_days: 7,
+        metadata: { trial_requested: 'true' }
+      };
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
@@ -123,28 +125,58 @@ router.post('/webhook', async (req, res) => {
   if (event.type === 'checkout.session.completed') {
     const customerId = session.customer;
     if (customerId) {
-      await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
-
       const { data: user } = await supabase
         .from('users')
         .select('email')
         .eq('stripe_customer_id', customerId)
         .single();
 
-      if (user?.email) {
-        const isTrial = !!(session.subscription);
+      const isTrial = session.subscription ? true : false;
 
-        if (isTrial) {
-          // Mark had_trial in users table
-          await supabase.from('users').update({ had_trial: true }).eq('stripe_customer_id', customerId);
+      if (isTrial && session.subscription) {
+        // Get the card fingerprint NOW (card is saved after checkout)
+        const fingerprint = await getCardFingerprint(customerId);
 
-          // Save card fingerprint to block same card on future accounts
-          const fingerprint = await getCardFingerprint(customerId);
-          if (fingerprint) {
-            await saveTrialFingerprint(fingerprint, user.email);
+        // Check if this card was already used for a trial
+        const alreadyUsed = await hasCardUsedTrial(fingerprint);
+
+        if (alreadyUsed) {
+          // Cancel the subscription immediately — trial abuse detected
+          console.log('Trial abuse detected! Cancelling subscription for customer:', customerId);
+          await stripe.subscriptions.cancel(session.subscription);
+          await supabase.from('users').update({ plan: 'expired' }).eq('stripe_customer_id', customerId);
+
+          if (user?.email) {
+            await sendEmail(
+              user.email,
+              'Your RankSniper trial has been cancelled',
+              `
+              <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+                <h2 style="color:#ef4444;">Trial Not Available</h2>
+                <p>Hi there,</p>
+                <p>Our system detected that this payment method has already been used for a free trial on another account. Each card can only be used for one free trial.</p>
+                <p>You can still subscribe to RankSniper Pro at $29/month.</p>
+                <a href="${process.env.FRONTEND_URL}/#pricing"
+                   style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
+                  Subscribe to Pro
+                </a>
+                <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactranksniper@gmail.com</p>
+              </div>
+              `
+            );
           }
+          return res.json({ received: true });
         }
 
+        // Legitimate first trial — save fingerprint and mark had_trial
+        if (fingerprint) await saveTrialFingerprint(fingerprint, user?.email);
+        await supabase.from('users').update({ plan: 'pro', had_trial: true }).eq('stripe_customer_id', customerId);
+      } else {
+        // Direct pro subscription (no trial)
+        await supabase.from('users').update({ plan: 'pro' }).eq('stripe_customer_id', customerId);
+      }
+
+      if (user?.email) {
         await sendEmail(
           user.email,
           '🎉 Welcome to RankSniper Pro!',
