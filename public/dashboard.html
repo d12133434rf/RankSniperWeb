@@ -161,6 +161,18 @@
   </div>
 
   <div class="section">
+    <div class="section-title"><span>📍</span> Google Business Profile <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
+    <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Connect your Google Business Profile so RankSniper can monitor for new reviews and alert you via SMS.</p>
+    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Google Maps URL</label>
+    <div class="phone-form">
+      <input type="url" class="phone-input" id="maps-url-input" placeholder="https://www.google.com/maps/place/Your+Business..." style="flex:1;">
+      <button class="phone-btn" onclick="saveMapsUrl()">Save</button>
+    </div>
+    <div class="phone-note">Go to Google Maps, search your business, click Share and paste the link here.</div>
+    <div class="msg" id="maps-msg"></div>
+  </div>
+
+  <div class="section">
     <div class="section-title"><span>⭐</span> Request a Google Review <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
     <p style="font-size:14px;color:var(--subtle);margin-bottom:20px;">Send a customer a text message asking them to leave you a Google review.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
@@ -295,6 +307,16 @@ function renderDashboard(user) {
   if (user.created_at) document.getElementById('profile-since').textContent = new Date(user.created_at).toLocaleDateString();
 
   loadBilling(user);
+  loadMapsUrl();
+}
+
+async function loadMapsUrl() {
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch('/api/reviews/maps-url', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.google_maps_url) document.getElementById('maps-url-input').value = data.google_maps_url;
+  } catch (err) {}
 }
 
 async function loadBilling(user) {
@@ -414,6 +436,26 @@ async function startUpgrade(trial) {
     if (data.url) window.location.href = data.url;
     else alert('Failed to open checkout. Please try again.');
   } catch (err) { alert('Failed to open checkout. Please try again.'); }
+}
+
+async function saveMapsUrl() {
+  const url = document.getElementById('maps-url-input').value.trim();
+  const msg = document.getElementById('maps-msg');
+  if (!url) { msg.textContent = 'Please enter your Google Maps URL'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  if (!url.includes('google.com/maps') && !url.includes('maps.google.com') && !url.includes('goo.gl/maps')) {
+    msg.textContent = 'Please enter a valid Google Maps URL'; msg.className = 'msg error'; msg.style.display = 'block'; return;
+  }
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch('/api/reviews/save-maps-url', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ google_maps_url: url })
+    });
+    const data = await res.json();
+    if (res.ok) { msg.textContent = '✓ Google Maps URL saved! We will start monitoring for new reviews.'; msg.className = 'msg success'; msg.style.display = 'block'; }
+    else { msg.textContent = data.error || 'Failed to save'; msg.className = 'msg error'; msg.style.display = 'block'; }
+  } catch (err) { msg.textContent = 'Network error.'; msg.className = 'msg error'; msg.style.display = 'block'; }
 }
 
 function logout() { localStorage.removeItem('rs_token'); window.location.href = '/'; }
