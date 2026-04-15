@@ -39,14 +39,13 @@ async function sendEmail(to, subject, html) {
 }
 
 // POST /api/stripe/create-checkout - create Stripe checkout session
-// Pass { trial: true } in body for free trial, or { trial: false } for direct pro
 router.post('/create-checkout', authMiddleware, async (req, res) => {
   try {
     const { trial } = req.body;
 
     const { data: user } = await supabase
       .from('users')
-      .select('email, stripe_customer_id')
+      .select('email, stripe_customer_id, had_trial')
       .eq('id', req.user.id)
       .single();
 
@@ -58,22 +57,52 @@ router.post('/create-checkout', authMiddleware, async (req, res) => {
       await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', req.user.id);
     }
 
+    // Check if user already used a trial via Stripe
+    let alreadyUsedTrial = user.had_trial === true;
+
+    if (!alreadyUsedTrial && trial !== false) {
+      // Check Stripe for any previous subscriptions with trial
+      const previousSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'all',
+        limit: 10
+      });
+      alreadyUsedTrial = previousSubs.data.some(sub => sub.trial_end !== null);
+
+      // Also check if any other Stripe customer shares the same card fingerprint
+      const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
+      if (paymentMethods.data.length > 0) {
+        const fingerprint = paymentMethods.data[0].card.fingerprint;
+        if (fingerprint) {
+          // Search for other customers with same card fingerprint
+          const allCustomers = await stripe.customers.search({
+            query: `metadata['cardFingerprint']:'${fingerprint}'`,
+            limit: 5
+          });
+          if (allCustomers.data.some(c => c.id !== customerId)) {
+            alreadyUsedTrial = true;
+          }
+        }
+      }
+    }
+
     const sessionConfig = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID, quantity: 1 }],
       mode: 'subscription',
+      allow_promotion_codes: true,
       success_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/dashboard.html?upgraded=true',
       cancel_url: (process.env.FRONTEND_URL || 'http://localhost:3000') + '/#pricing',
     };
 
-    // Only add trial if explicitly requested
-    if (trial !== false) {
+    // Only add trial if explicitly requested AND user hasn't used one before
+    if (trial !== false && !alreadyUsedTrial) {
       sessionConfig.subscription_data = { trial_period_days: 7 };
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
-    res.json({ url: session.url });
+    res.json({ url: session.url, hadTrial: alreadyUsedTrial });
   } catch (err) {
     console.error('Stripe checkout error:', err);
     res.status(500).json({ error: 'Failed to create checkout session' });
@@ -111,6 +140,25 @@ router.post('/webhook', async (req, res) => {
 
       if (user?.email) {
         const isTrial = session.subscription ? true : false;
+
+        // Store card fingerprint to prevent future trial abuse
+        if (session.payment_intent || session.setup_intent) {
+          try {
+            const paymentMethods = await stripe.paymentMethods.list({ customer: customerId, type: 'card' });
+            if (paymentMethods.data.length > 0) {
+              const fingerprint = paymentMethods.data[0].card.fingerprint;
+              await stripe.customers.update(customerId, { metadata: { cardFingerprint: fingerprint } });
+            }
+          } catch (e) {
+            console.error('Error storing card fingerprint:', e.message);
+          }
+        }
+
+        // Mark that this user has used a trial
+        if (isTrial) {
+          await supabase.from('users').update({ had_trial: true }).eq('stripe_customer_id', customerId);
+        }
+
         await sendEmail(
           user.email,
           '🎉 Welcome to RankSniper Pro!',
@@ -119,12 +167,13 @@ router.post('/webhook', async (req, res) => {
             <h2 style="color:#3b82f6;">You're now on RankSniper Pro!</h2>
             <p>Hi there,</p>
             ${isTrial
-              ? `<p>Thank you for starting your <strong>30-day free trial</strong>! You now have full access to all RankSniper Pro features. You won't be charged until your trial ends.</p>`
+              ? `<p>Thank you for starting your <strong>7-day free trial</strong>! You now have full access to all RankSniper Pro features. You won't be charged until your trial ends.</p>`
               : `<p>Thank you for subscribing to <strong>RankSniper Pro</strong>! You now have full access to all features.</p>`
             }
             <h3 style="color:#1e40af;">What's included:</h3>
             <ul>
               <li>✅ Unlimited AI-powered review responses</li>
+              <li>✅ SMS review alerts</li>
               <li>✅ Smart tone matching</li>
               <li>✅ All future features included</li>
             </ul>
@@ -152,7 +201,6 @@ router.post('/webhook', async (req, res) => {
     }
   }
 
-  // Fires immediately when user cancels — cancel_at_period_end becomes true
   if (event.type === 'customer.subscription.updated') {
     const customerId = session.customer;
     if (customerId && session.cancel_at_period_end === true) {
