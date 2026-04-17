@@ -85,33 +85,36 @@ async function sendBiWeeklyReports() {
         const bizName = user.business_name || 'your business';
         const dashUrl = (process.env.FRONTEND_URL || 'https://getranksniper.com') + '/dashboard.html';
 
-        const htmlBody = '<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#050810;color:#f0f4ff;">' +
-          '<h2 style="color:#3b82f6;margin-bottom:4px;">Your RankSniper Report</h2>' +
-          '<p style="color:#6b7280;margin-bottom:24px;">Here\'s how ' + bizName + ' performed over the last 2 weeks.</p>' +
-          '<table style="width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:24px;">' +
-          '<tr>' +
-          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
-          '<div style="font-size:32px;font-weight:800;color:#3b82f6;">' + total + '</div>' +
-          '<div style="font-size:12px;color:#6b7280;">Reviews responded to</div></td>' +
-          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
-          '<div style="font-size:32px;font-weight:800;color:#22c55e;">' + avgScore + '</div>' +
-          '<div style="font-size:12px;color:#6b7280;">Avg SEO score</div></td>' +
-          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
-          '<div style="font-size:32px;font-weight:800;color:#f59e0b;">' + negative + '</div>' +
-          '<div style="font-size:12px;color:#6b7280;">Negative reviews handled</div></td>' +
+        const htmlBody = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#ffffff;color:#111111;">' +
+          '<div style="margin-bottom:24px;"><span style="font-size:20px;font-weight:800;color:#3b82f6;">RankSniper</span></div>' +
+          '<h2 style="font-size:22px;font-weight:700;color:#111111;margin-bottom:8px;">Your bi-weekly summary</h2>' +
+          '<p style="color:#6b7280;margin-bottom:28px;font-size:15px;">Here is how ' + bizName + ' performed over the last 2 weeks.</p>' +
+          '<table style="width:100%;border-collapse:collapse;margin-bottom:28px;"><tr>' +
+          '<td style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:20px;text-align:center;">' +
+          '<div style="font-size:36px;font-weight:800;color:#3b82f6;">' + total + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Reviews responded to</div></td>' +
+          '<td style="width:8px;"></td>' +
+          '<td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;text-align:center;">' +
+          '<div style="font-size:36px;font-weight:800;color:#16a34a;">' + avgScore + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Avg SEO score</div></td>' +
+          '<td style="width:8px;"></td>' +
+          '<td style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:20px;text-align:center;">' +
+          '<div style="font-size:36px;font-weight:800;color:#d97706;">' + negative + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;margin-top:4px;">Negative reviews handled</div></td>' +
           '</tr></table>' +
-          '<p style="color:#94a3b8;">You responded to <strong style="color:#fff">' + positive + ' positive</strong> and <strong style="color:#fff">' + negative + ' negative</strong> reviews. Keep it up — consistent responses help you rank higher on Google.</p>' +
-          '<a href="' + dashUrl + '" style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:20px;">View Dashboard</a>' +
-          '<p style="margin-top:24px;color:#374151;font-size:12px;">You\'re receiving this because you\'re a RankSniper Pro member. Questions? Email contactranksniper@gmail.com</p>' +
+          '<p style="color:#374151;font-size:15px;line-height:1.6;margin-bottom:24px;">You responded to <strong>' + positive + ' positive</strong> and <strong>' + negative + ' negative</strong> reviews this period. Consistent responses help you rank higher on Google Maps.</p>' +
+          '<a href="' + dashUrl + '" style="display:inline-block;background:#3b82f6;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">View Dashboard</a>' +
+          '<hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0;">' +
+          '<p style="color:#9ca3af;font-size:12px;">You are receiving this as a RankSniper Pro member. Questions? Email contactranksniper@gmail.com</p>' +
           '</div>';
 
-        await fetch('https://api.resend.com/emails', {
+                await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.RESEND_API_KEY },
           body: JSON.stringify({
-            from: 'RankSniper <no-reply@getranksniper.com>',
+            from: 'RankSniper <hello@getranksniper.com>',
             to: [user.email],
-            subject: 'Your RankSniper Report — Last 2 Weeks',
+            subject: 'Your RankSniper summary for the last 2 weeks',
             html: htmlBody
           })
         });
