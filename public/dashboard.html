@@ -372,8 +372,24 @@ async function loadBilling(user) {
       document.getElementById('billing-amount').textContent = '—';
     } else if (data.status === 'trialing' && data.trial_end) {
       const trialEnd = new Date(data.trial_end * 1000);
-      const daysLeft = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
-      document.getElementById('billing-date').textContent = trialEnd.toLocaleDateString() + (daysLeft > 0 ? ' (' + daysLeft + ' days left)' : '');
+      const now = new Date();
+      const diffMs = trialEnd - now;
+      const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const daysLeft = Math.floor(totalHours / 24);
+      const hoursLeft = totalHours % 24;
+      const dateStr = trialEnd.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+      const timeStr = trialEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      let countdownStr = '';
+      if (diffMs > 0) {
+        if (daysLeft > 0) countdownStr = daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ', ' + hoursLeft + ' hr' + (hoursLeft !== 1 ? 's' : '') + ' left';
+        else countdownStr = hoursLeft + ' hour' + (hoursLeft !== 1 ? 's' : '') + ' left';
+      }
+      const dateEl = document.getElementById('billing-date');
+      if (diffMs <= 0) {
+        dateEl.innerHTML = dateStr + ' at ' + timeStr + ' <span style="color:#ef4444;font-weight:700;">(Expired)</span>';
+      } else {
+        dateEl.textContent = dateStr + ' at ' + timeStr + (countdownStr ? ' (' + countdownStr + ')' : '');
+      }
       document.getElementById('billing-amount').textContent = data.cancel_at_period_end ? 'No charge — canceled' : '$0.00 now, then $29.00/month';
     } else if (data.current_period_end) {
       document.getElementById('billing-date').textContent = new Date(data.current_period_end * 1000).toLocaleDateString();
