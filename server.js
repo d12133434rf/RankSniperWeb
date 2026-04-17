@@ -13,7 +13,23 @@ const responsesRoutes = require('./routes/responses');
 const app = express();
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    // Allow getranksniper.com and Chrome extensions
+    if (
+      origin === process.env.FRONTEND_URL ||
+      origin === 'https://getranksniper.com' ||
+      origin.startsWith('chrome-extension://') ||
+      origin.includes('google.com')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Allow all for now
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
