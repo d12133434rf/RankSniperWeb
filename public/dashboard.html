@@ -665,7 +665,6 @@ async function searchReviewLink() {
   const results = document.getElementById('place-results');
   if (!query) return;
   results.innerHTML = '<span style="font-size:12px;color:var(--muted);">Searching...</span>';
-
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch('/api/responses/place-search?q=' + encodeURIComponent(query), {
@@ -677,12 +676,25 @@ async function searchReviewLink() {
       return;
     }
     const reviewUrl = 'https://search.google.com/local/writereview?placeid=' + data.place_id;
-    results.innerHTML = '<div style="font-size:12px;color:var(--subtle);margin-bottom:6px;">Found: <strong style="color:var(--text)">' + data.name + '</strong> — ' + data.address + '</div>' +
-      '<button class="phone-btn" style="padding:8px 16px;font-size:12px;" onclick="document.getElementById('review-link').value='' + reviewUrl + '';document.getElementById('place-results').innerHTML='<span style=\"font-size:12px;color:#22c55e\">✓ Review link added!</span>'">Use This Link</button>';
+    results.innerHTML = '';
+    const foundDiv = document.createElement('div');
+    foundDiv.style.cssText = 'font-size:12px;color:var(--subtle);margin-bottom:6px;';
+    foundDiv.innerHTML = 'Found: <strong style="color:var(--text)">' + data.name + '</strong> — ' + data.address;
+    const useBtn = document.createElement('button');
+    useBtn.className = 'phone-btn';
+    useBtn.style.cssText = 'padding:8px 16px;font-size:12px;margin-top:8px;';
+    useBtn.textContent = 'Use This Link';
+    useBtn.addEventListener('click', function() {
+      document.getElementById('review-link').value = reviewUrl;
+      results.innerHTML = '<span style="font-size:12px;color:#22c55e;">✓ Review link added!</span>';
+    });
+    results.appendChild(foundDiv);
+    results.appendChild(useBtn);
   } catch (err) {
     results.innerHTML = '<span style="font-size:12px;color:#ef4444;">Search failed. Try again.</span>';
   }
 }
+
 </script>
 </body>
 </html>
