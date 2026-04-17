@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Response History — RankSniper</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810; --surface: #0d1117; --surface2: #161b27;
+    --border: rgba(255,255,255,0.07); --accent: #3b82f6; --accent2: #6366f1;
+    --green: #22c55e; --text: #f0f4ff; --muted: #6b7280; --subtle: #94a3b8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; min-height: 100vh; }
+
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; cursor: pointer; }
+  .nav-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .user-email { font-size: 13px; color: var(--subtle); }
+  .nav-link { padding: 7px 16px; border: 1px solid var(--border); border-radius: 7px; color: var(--subtle); font-size: 13px; text-decoration: none; transition: all 0.2s; }
+  .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .logout-btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 7px; color: var(--subtle); background: none; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .logout-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .page-header p { color: var(--subtle); font-size: 15px; }
+
+  .summary-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; }
+  .summary-num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+  .summary-label { font-size: 12px; color: var(--muted); }
+
+  .history-container { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+  .history-filters { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+  .filter-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit; transition: border-color 0.2s; }
+  .filter-input:focus { border-color: var(--accent); }
+  .filter-input::placeholder { color: var(--muted); }
+  .filter-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit; }
+  .filter-select option { background: var(--surface2); }
+
+  .history-item { padding: 18px 0; border-bottom: 1px solid var(--border); }
+  .history-item:last-child { border-bottom: none; }
+  .history-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .history-reviewer { font-weight: 600; font-size: 14px; }
+  .history-meta { display: flex; align-items: center; gap: 10px; }
+  .history-score { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .history-date { font-size: 11px; color: var(--muted); }
+  .history-stars { font-size: 13px; color: #f59e0b; margin-bottom: 6px; }
+  .history-review { font-size: 12px; color: var(--muted); margin-bottom: 10px; font-style: italic; }
+  .history-response { font-size: 13px; color: var(--subtle); background: var(--surface2); border-radius: 8px; padding: 12px; cursor: pointer; line-height: 1.6; border: 1px solid transparent; transition: border-color 0.2s; }
+  .history-response:hover { border-color: var(--border); }
+
+  .load-more-btn { width: 100%; padding: 10px; margin-top: 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--subtle); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .load-more-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 768px) {
+    .main { padding: 24px 16px; }
+    .summary-bar { grid-template-columns: 1fr; }
+    nav { padding: 14px 20px; }
+    .user-email { display: none; }
+    .history-filters { flex-direction: column; }
+    .filter-input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="window.location.href='/dashboard.html'">
+    <div class="nav-logo-icon">RS</div>
+    RankSniper
+  </div>
+  <div class="nav-right">
+    <span class="user-email" id="user-email"></span>
+    <a href="/dashboard.html" class="nav-link">Dashboard</a>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="page-header">
+    <h1>📋 Response History</h1>
+    <p>Every AI response you have generated, saved to your account.</p>
+  </div>
+
+  <div class="summary-bar" id="summary-bar" style="display:none;">
+    <div class="summary-card">
+      <div class="summary-num" id="stat-total" style="color:var(--accent);">—</div>
+      <div class="summary-label">Total responses</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num" id="stat-score" style="color:var(--green);">—</div>
+      <div class="summary-label">Avg SEO score</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-num" id="stat-negative" style="color:#f59e0b;">—</div>
+      <div class="summary-label">Negative reviews handled</div>
+    </div>
+  </div>
+
+  <div class="history-container">
+    <div class="history-filters">
+      <input type="text" class="filter-input" id="search-filter" placeholder="Search by reviewer or response..." style="flex:1;" oninput="filterHistory()">
+      <select class="filter-select" id="rating-filter" onchange="filterHistory()">
+        <option value="">All ratings</option>
+        <option value="5">5 stars</option>
+        <option value="4">4 stars</option>
+        <option value="3">3 stars</option>
+        <option value="2">2 stars</option>
+        <option value="1">1 star</option>
+      </select>
+    </div>
+    <div id="history-items"></div>
+    <button class="load-more-btn" id="load-more-btn" style="display:none;" onclick="loadMoreHistory()">Load More</button>
+  </div>
+</div>
+
+<script>
+const API = '';
+let allResponses = [];
+let filteredResponses = [];
+let currentPage = 0;
+const PAGE_SIZE = 15;
+
+async function init() {
+  const token = localStorage.getItem('rs_token');
+  if (!token) { window.location.href = '/#auth'; return; }
+
+  try {
+    const res = await fetch(API + '/api/user/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('rs_token'); window.location.href = '/#auth'; return; }
+    const user = await res.json();
+    document.getElementById('user-email').textContent = user.email;
+  } catch (err) {}
+
+  loadHistory();
+}
+
+async function loadHistory() {
+  const token = localStorage.getItem('rs_token');
+  const container = document.getElementById('history-items');
+  container.innerHTML = '<p style="color:var(--muted);font-size:13px;">Loading...</p>';
+
+  try {
+    const res = await fetch(API + '/api/responses', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+
+    if (!data.length) {
+      container.innerHTML = '<div class="empty-state">No responses yet.<br>Generate your first AI response using the Chrome extension!</div>';
+      return;
+    }
+
+    allResponses = data;
+    filteredResponses = data;
+
+    // Summary stats
+    const avgScore = Math.round(data.filter(r => r.score).reduce((a, r) => a + r.score, 0) / (data.filter(r => r.score).length || 1));
+    document.getElementById('stat-total').textContent = data.length;
+    document.getElementById('stat-score').textContent = avgScore;
+    document.getElementById('stat-negative').textContent = data.filter(r => r.rating <= 2).length;
+    document.getElementById('summary-bar').style.display = 'grid';
+
+    currentPage = 0;
+    container.innerHTML = '';
+    renderPage();
+  } catch (err) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px;">Could not load history.</p>';
+  }
+}
+
+function filterHistory() {
+  const search = document.getElementById('search-filter').value.toLowerCase();
+  const rating = document.getElementById('rating-filter').value;
+
+  filteredResponses = allResponses.filter(r => {
+    const matchSearch = !search ||
+      (r.reviewer_name || '').toLowerCase().includes(search) ||
+      (r.response_text || '').toLowerCase().includes(search) ||
+      (r.review_text || '').toLowerCase().includes(search) ||
+      (r.business_name || '').toLowerCase().includes(search);
+    const matchRating = !rating || (r.rating || 5) === parseInt(rating);
+    return matchSearch && matchRating;
+  });
+
+  currentPage = 0;
+  document.getElementById('history-items').innerHTML = '';
+  renderPage();
+}
+
+function renderPage() {
+  const container = document.getElementById('history-items');
+  const start = currentPage * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const page = filteredResponses.slice(start, end);
+
+  if (page.length === 0 && currentPage === 0) {
+    container.innerHTML = '<div class="empty-state">No responses match your filter.</div>';
+    document.getElementById('load-more-btn').style.display = 'none';
+    return;
+  }
+
+  page.forEach(function(r) {
+    const scoreColor = r.score >= 80 ? '#22c55e' : r.score >= 60 ? '#f59e0b' : '#ef4444';
+    const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML =
+      '<div class="history-item-header">' +
+      '<span class="history-reviewer">' + (r.reviewer_name || 'Unknown') + (r.business_name ? ' <span style="color:var(--muted);font-weight:400;">— ' + r.business_name + '</span>' : '') + '</span>' +
+      '<div class="history-meta">' +
+      (r.score ? '<span class="history-score" style="background:' + scoreColor + '20;color:' + scoreColor + ';border:1px solid ' + scoreColor + '">Score: ' + r.score + '/100</span>' : '') +
+      '<span class="history-date">' + new Date(r.created_at).toLocaleDateString() + '</span>' +
+      '</div></div>' +
+      '<div class="history-stars">' + stars + '</div>' +
+      '<div class="history-review">"' + (r.review_text || '').substring(0, 120) + ((r.review_text || '').length > 120 ? '...' : '') + '"</div>';
+
+    const responseDiv = document.createElement('div');
+    responseDiv.className = 'history-response';
+    responseDiv.title = 'Click to copy';
+    responseDiv.textContent = r.response_text || '';
+    responseDiv.addEventListener('click', function() {
+      navigator.clipboard.writeText(this.textContent);
+      this.style.color = '#22c55e';
+      this.title = 'Copied!';
+      setTimeout(() => { this.style.color = ''; this.title = 'Click to copy'; }, 2000);
+    });
+
+    div.appendChild(responseDiv);
+    container.appendChild(div);
+  });
+
+  const shown = (currentPage + 1) * PAGE_SIZE;
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (shown >= filteredResponses.length) {
+    loadMoreBtn.style.display = 'none';
+  } else {
+    loadMoreBtn.style.display = 'block';
+    loadMoreBtn.textContent = 'Load More (' + (filteredResponses.length - shown) + ' remaining)';
+  }
+}
+
+function loadMoreHistory() {
+  currentPage++;
+  renderPage();
+}
+
+function logout() { localStorage.removeItem('rs_token'); window.location.href = '/'; }
+
+init();
+</script>
+</body>
+</html>
