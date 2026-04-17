@@ -624,23 +624,40 @@ async function loadResponseHistory() {
   try {
     const res = await fetch('/api/responses', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
-    if (!data.length) { list.textContent = 'No responses yet. Generate your first AI response using the Chrome extension!'; return; }
-    const stars = r => '★'.repeat(r) + '☆'.repeat(5 - r);
-    list.innerHTML = data.map(r => {
+    if (!data.length) {
+      list.textContent = 'No responses yet. Generate your first AI response using the Chrome extension!';
+      return;
+    }
+    list.innerHTML = '';
+    data.forEach(function(r) {
       const scoreColor = r.score >= 80 ? '#22c55e' : r.score >= 60 ? '#f59e0b' : '#ef4444';
-      return '<div style="padding:14px 0;border-bottom:1px solid var(--border);">' +
+      const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:14px 0;border-bottom:1px solid var(--border);';
+      div.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-        '<span style="font-weight:600;font-size:13px;">' + (r.reviewer_name || 'Unknown') + ' — ' + (r.business_name || '') + '</span>' +
+        '<span style="font-weight:600;font-size:13px;">' + (r.reviewer_name || 'Unknown') + (r.business_name ? ' — ' + r.business_name : '') + '</span>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
         (r.score ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:' + scoreColor + '20;color:' + scoreColor + ';border:1px solid ' + scoreColor + '">Score: ' + r.score + '/100</span>' : '') +
         '<span style="font-size:11px;color:var(--muted)">' + new Date(r.created_at).toLocaleDateString() + '</span>' +
         '</div></div>' +
-        '<div style="font-size:12px;color:#f59e0b;margin-bottom:6px;">' + stars(r.rating || 5) + '</div>' +
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-style:italic;">"' + (r.review_text || '').substring(0, 100) + (r.review_text?.length > 100 ? '...' : '') + '"</div>' +
-        '<div style="font-size:13px;color:var(--subtle);background:var(--surface2);border-radius:8px;padding:10px;cursor:pointer;" onclick="navigator.clipboard.writeText(this.dataset.text);this.style.color='#22c55e';setTimeout(()=>this.style.color='',1500)" data-text="' + (r.response_text || '').replace(/"/g, '&quot;') + '" title="Click to copy">' + (r.response_text || '') + '</div>' +
-        '</div>';
-    }).join('');
-  } catch (err) { list.textContent = 'Could not load history.'; }
+        '<div style="font-size:12px;color:#f59e0b;margin-bottom:6px;">' + stars + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-style:italic;">"' + (r.review_text || '').substring(0, 100) + (r.review_text && r.review_text.length > 100 ? '...' : '') + '"</div>';
+      const responseDiv = document.createElement('div');
+      responseDiv.style.cssText = 'font-size:13px;color:var(--subtle);background:var(--surface2);border-radius:8px;padding:10px;cursor:pointer;';
+      responseDiv.title = 'Click to copy';
+      responseDiv.textContent = r.response_text || '';
+      responseDiv.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.textContent);
+        this.style.color = '#22c55e';
+        setTimeout(() => this.style.color = '', 1500);
+      });
+      div.appendChild(responseDiv);
+      list.appendChild(div);
+    });
+  } catch (err) {
+    list.textContent = 'Could not load history.';
+  }
 }
 
 async function searchReviewLink() {
