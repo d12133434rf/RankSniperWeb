@@ -52,13 +52,34 @@ async function sendBiWeeklyReports() {
           .eq('user_id', user.id)
           .gte('created_at', twoWeeksAgo);
 
-        const total = responses?.length || 0;
-        if (total === 0) continue; // Skip users who haven't used it
+        const total = responses ? responses.length : 0;
+        if (total === 0) continue;
 
         const avgScore = total > 0 ? Math.round(responses.reduce((a, r) => a + (r.score || 80), 0) / total) : 0;
-        const negative = responses?.filter(r => r.rating <= 2).length || 0;
-        const positive = responses?.filter(r => r.rating >= 4).length || 0;
+        const negative = responses ? responses.filter(r => r.rating <= 2).length : 0;
+        const positive = responses ? responses.filter(r => r.rating >= 4).length : 0;
         const bizName = user.business_name || 'your business';
+        const dashUrl = (process.env.FRONTEND_URL || 'https://getranksniper.com') + '/dashboard.html';
+
+        const htmlBody = '<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#050810;color:#f0f4ff;">' +
+          '<h2 style="color:#3b82f6;margin-bottom:4px;">Your RankSniper Report</h2>' +
+          '<p style="color:#6b7280;margin-bottom:24px;">Here\'s how ' + bizName + ' performed over the last 2 weeks.</p>' +
+          '<table style="width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:24px;">' +
+          '<tr>' +
+          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
+          '<div style="font-size:32px;font-weight:800;color:#3b82f6;">' + total + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;">Reviews responded to</div></td>' +
+          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
+          '<div style="font-size:32px;font-weight:800;color:#22c55e;">' + avgScore + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;">Avg SEO score</div></td>' +
+          '<td style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">' +
+          '<div style="font-size:32px;font-weight:800;color:#f59e0b;">' + negative + '</div>' +
+          '<div style="font-size:12px;color:#6b7280;">Negative reviews handled</div></td>' +
+          '</tr></table>' +
+          '<p style="color:#94a3b8;">You responded to <strong style="color:#fff">' + positive + ' positive</strong> and <strong style="color:#fff">' + negative + ' negative</strong> reviews. Keep it up — consistent responses help you rank higher on Google.</p>' +
+          '<a href="' + dashUrl + '" style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:20px;">View Dashboard</a>' +
+          '<p style="margin-top:24px;color:#374151;font-size:12px;">You\'re receiving this because you\'re a RankSniper Pro member. Questions? Email contactranksniper@gmail.com</p>' +
+          '</div>';
 
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -67,29 +88,7 @@ async function sendBiWeeklyReports() {
             from: 'RankSniper <no-reply@getranksniper.com>',
             to: [user.email],
             subject: 'Your RankSniper Report — Last 2 Weeks',
-            html: \`
-              <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#050810;color:#f0f4ff;">
-                <h2 style="color:#3b82f6;margin-bottom:4px;">Your RankSniper Report</h2>
-                <p style="color:#6b7280;margin-bottom:24px;">Here's how \${bizName} performed over the last 2 weeks.</p>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
-                  <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:32px;font-weight:800;color:#3b82f6;">\${total}</div>
-                    <div style="font-size:12px;color:#6b7280;">Reviews responded to</div>
-                  </div>
-                  <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:32px;font-weight:800;color:#22c55e;">\${avgScore}</div>
-                    <div style="font-size:12px;color:#6b7280;">Avg SEO score</div>
-                  </div>
-                  <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;text-align:center;">
-                    <div style="font-size:32px;font-weight:800;color:#f59e0b;">\${negative}</div>
-                    <div style="font-size:12px;color:#6b7280;">Negative reviews handled</div>
-                  </div>
-                </div>
-                <p style="color:#94a3b8;">You responded to <strong style="color:#fff">\${positive} positive</strong> and <strong style="color:#fff">\${negative} negative</strong> reviews. Keep it up — consistent responses help you rank higher on Google.</p>
-                <a href="\${process.env.FRONTEND_URL}/dashboard.html" style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:20px;">View Dashboard</a>
-                <p style="margin-top:24px;color:#374151;font-size:12px;">You're receiving this because you're a RankSniper Pro member. Questions? Reply to this email.</p>
-              </div>
-            \`
+            html: htmlBody
           })
         });
         console.log('[BiWeeklyReport] Sent to:', user.email);
@@ -104,17 +103,14 @@ async function sendBiWeeklyReports() {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`RankSniper server running on port ${PORT}`);
+  console.log('RankSniper server running on port ' + PORT);
 
-  // Run review check immediately on startup, then every 30 minutes
   checkAllUsersForNewReviews();
   setInterval(checkAllUsersForNewReviews, 30 * 60 * 1000);
 
-  // Bi-weekly email report — check every hour, send on Monday mornings
   setInterval(async () => {
     const now = new Date();
-    if (now.getDay() === 1 && now.getHours() === 8 && now.getMinutes() < 60) {
-      // Only send every 2 weeks — check if 14 days since last send
+    if (now.getDay() === 1 && now.getHours() === 8) {
       const lastSent = global.lastReportSent || 0;
       const daysSince = (Date.now() - lastSent) / (1000 * 60 * 60 * 24);
       if (daysSince >= 14 || lastSent === 0) {
