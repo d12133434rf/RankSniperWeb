@@ -460,6 +460,13 @@ async function savePhone() {
     if (!phone3) { msg.textContent = 'Phone 3 must be a valid 10-digit US number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
   }
 
+  // Check for duplicates
+  const allNums = [phone, phone2, phone3].filter(p => p);
+  const uniqueNums = new Set(allNums);
+  if (uniqueNums.size !== allNums.length) {
+    msg.textContent = 'Please do not enter the same number twice'; msg.className = 'msg error'; msg.style.display = 'block'; return;
+  }
+
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch(API + '/api/user/phone', {
