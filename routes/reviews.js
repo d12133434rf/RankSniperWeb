@@ -93,7 +93,7 @@ async function checkAllUsersForNewReviews() {
     // Get all pro users with a phone number and google maps URL
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, email, phone, google_maps_url, business_name')
+      .select('id, email, phone, phone2, phone3, google_maps_url, business_name')
       .eq('plan', 'pro')
       .not('phone', 'is', null)
       .not('google_maps_url', 'is', null)
@@ -156,7 +156,10 @@ async function checkAllUsersForNewReviews() {
 
           const message = `🎯 RankSniper Alert!\n${review.reviewer_name} left a ${review.rating}-star review${stars}:\n"${preview}"\n\nOpen RankSniper to respond: getranksniper.com/dashboard.html`;
 
-          await sendSMS(user.phone, message);
+          const phonesToAlert = [user.phone, user.phone2, user.phone3].filter(p => p && p.trim());
+          for (const phoneNum of phonesToAlert) {
+            await sendSMS(phoneNum, message);
+          }
         }
       } catch (userErr) {
         console.error(`[ReviewMonitor] Error processing user ${user.id}:`, userErr.message);
