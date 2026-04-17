@@ -134,7 +134,7 @@
       <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;">Most Popular</div>
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;">Pro</div>
       <div style="font-size:13px;color:var(--subtle);">Skip the trial. Full Pro access starting today.</div>
-      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$29 <span style="font-size:13px;font-weight:400;color:var(--muted);">/month</span></div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$19 <span style="font-size:13px;font-weight:400;color:var(--muted);">/month</span></div>
       <button class="upgrade-btn" id="pro-btn" onclick="startUpgrade(false)" style="width:100%;margin-top:4px;">Subscribe Now</button>
     </div>
   </div>
@@ -365,7 +365,7 @@ async function loadBilling(user) {
     return;
   }
 
-  document.getElementById('billing-plan').textContent = 'Pro — $29/month';
+  document.getElementById('billing-plan').textContent = 'Pro — $19/month';
 
   const token = localStorage.getItem('rs_token');
   try {
@@ -398,7 +398,7 @@ async function loadBilling(user) {
       const trialCard = document.getElementById('trial-card');
       if (trialCard) trialCard.style.display = 'none';
       const proBtn = document.getElementById('pro-btn');
-      if (proBtn) proBtn.textContent = data.cancel_at_period_end ? 'Resubscribe — $29/mo' : 'Upgrade to Pro — $29/mo';
+      if (proBtn) proBtn.textContent = data.cancel_at_period_end ? 'Resubscribe — $19/mo' : 'Upgrade to Pro — $19/mo';
     }
 
     if (data.status === 'canceled') {
@@ -424,10 +424,10 @@ async function loadBilling(user) {
       } else {
         dateEl.textContent = dateStr + ' at ' + timeStr + (countdownStr ? ' (' + countdownStr + ')' : '');
       }
-      document.getElementById('billing-amount').textContent = data.cancel_at_period_end ? 'No charge — canceled' : '$0.00 now, then $29.00/month';
+      document.getElementById('billing-amount').textContent = data.cancel_at_period_end ? 'No charge — canceled' : '$0.00 now, then $19.00/month';
     } else if (data.current_period_end) {
       document.getElementById('billing-date').textContent = new Date(data.current_period_end * 1000).toLocaleDateString();
-      document.getElementById('billing-amount').textContent = data.cancel_at_period_end ? 'No renewal' : '$29.00/month';
+      document.getElementById('billing-amount').textContent = data.cancel_at_period_end ? 'No renewal' : '$19.00/month';
     }
   } catch (err) {
     document.getElementById('billing-status').textContent = isPro ? 'Active' : 'Expired';
