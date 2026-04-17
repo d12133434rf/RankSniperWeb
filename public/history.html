@@ -116,6 +116,7 @@
         <option value="2">2 stars</option>
         <option value="1">1 star</option>
       </select>
+      <button onclick="deleteAllHistory()" style="padding:8px 14px;background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='none'">Clear All</button>
     </div>
     <div id="history-items"></div>
     <button class="load-more-btn" id="load-more-btn" style="display:none;" onclick="loadMoreHistory()">Load More</button>
@@ -211,6 +212,14 @@ function renderPage() {
     const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
     const div = document.createElement('div');
     div.className = 'history-item';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '✕';
+    deleteBtn.title = 'Delete this response';
+    deleteBtn.style.cssText = 'background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color 0.2s;flex-shrink:0;';
+    deleteBtn.addEventListener('mouseover', function() { this.style.color = '#ef4444'; });
+    deleteBtn.addEventListener('mouseout', function() { this.style.color = 'var(--muted)'; });
+    deleteBtn.addEventListener('click', function() { deleteSingleResponse(r.id, div); });
+
     div.innerHTML =
       '<div class="history-item-header">' +
       '<span class="history-reviewer">' + (r.reviewer_name || 'Unknown') + (r.business_name ? ' <span style="color:var(--muted);font-weight:400;">— ' + r.business_name + '</span>' : '') + '</span>' +
@@ -233,6 +242,7 @@ function renderPage() {
     });
 
     div.appendChild(responseDiv);
+    div.querySelector('.history-item-header').appendChild(deleteBtn);
     container.appendChild(div);
   });
 
@@ -249,6 +259,49 @@ function renderPage() {
 function loadMoreHistory() {
   currentPage++;
   renderPage();
+}
+
+async function deleteSingleResponse(id, divEl) {
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch(API + '/api/responses/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      divEl.style.opacity = '0';
+      divEl.style.transition = 'opacity 0.3s';
+      setTimeout(() => {
+        divEl.remove();
+        allResponses = allResponses.filter(r => r.id !== id);
+        filteredResponses = filteredResponses.filter(r => r.id !== id);
+        document.getElementById('stat-total').textContent = allResponses.length;
+        document.getElementById('stat-negative').textContent = allResponses.filter(r => r.rating <= 2).length;
+      }, 300);
+    }
+  } catch (err) {
+    alert('Could not delete. Please try again.');
+  }
+}
+
+async function deleteAllHistory() {
+  if (!confirm('Delete all response history? This cannot be undone.')) return;
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch(API + '/api/responses', {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      allResponses = [];
+      filteredResponses = [];
+      document.getElementById('history-items').innerHTML = '<div class="empty-state">No responses yet.<br>Generate your first AI response using the Chrome extension!</div>';
+      document.getElementById('load-more-btn').style.display = 'none';
+      document.getElementById('summary-bar').style.display = 'none';
+    }
+  } catch (err) {
+    alert('Could not delete history. Please try again.');
+  }
 }
 
 function logout() { localStorage.removeItem('rs_token'); window.location.href = '/'; }
