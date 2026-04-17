@@ -150,13 +150,21 @@
 
   <div class="section">
     <div class="section-title"><span>📱</span> SMS Review Alerts <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
-    <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Get a text the moment a new review comes in so you can respond instantly.</p>
-    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Your Phone Number</label>
-    <div class="phone-form">
-      <input type="tel" class="phone-input" id="phone-input" placeholder="+1 (555) 000-0000" style="flex:1;">
-      <button class="phone-btn" onclick="savePhone()">Save Number</button>
+    <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Get a text the moment a new review comes in so you can respond instantly. Add up to 3 numbers.</p>
+    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Phone Number 1 <span style="color:var(--muted);font-weight:400;text-transform:none;">(primary)</span></label>
+    <div class="phone-form" style="margin-bottom:10px;">
+      <input type="tel" class="phone-input" id="phone-input" placeholder="e.g. 8005551234" style="flex:1;">
     </div>
-    <div class="phone-note">Standard SMS rates apply. You can opt out anytime.</div>
+    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Phone Number 2 <span style="color:var(--muted);font-weight:400;text-transform:none;">(optional)</span></label>
+    <div class="phone-form" style="margin-bottom:10px;">
+      <input type="tel" class="phone-input" id="phone-input-2" placeholder="e.g. 8005551235" style="flex:1;">
+    </div>
+    <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Phone Number 3 <span style="color:var(--muted);font-weight:400;text-transform:none;">(optional)</span></label>
+    <div class="phone-form" style="margin-bottom:10px;">
+      <input type="tel" class="phone-input" id="phone-input-3" placeholder="e.g. 8005551236" style="flex:1;">
+    </div>
+    <button class="phone-btn" onclick="savePhone()" style="margin-top:4px;">Save Numbers</button>
+    <div class="phone-note">Standard SMS rates apply. All saved numbers will receive alerts.</div>
     <div class="msg" id="phone-msg"></div>
   </div>
 
@@ -304,6 +312,8 @@ function renderDashboard(user) {
       : '<span class="plan-badge free">No Plan</span>';
   document.getElementById('profile-phone').textContent = user.phone || 'Not set';
   if (user.phone) document.getElementById('phone-input').value = user.phone;
+  if (user.phone2) document.getElementById('phone-input-2').value = user.phone2;
+  if (user.phone3) document.getElementById('phone-input-3').value = user.phone3;
   if (user.created_at) document.getElementById('profile-since').textContent = new Date(user.created_at).toLocaleDateString();
 
   loadBilling(user);
@@ -419,24 +429,53 @@ async function openBillingPortal() {
   }
 }
 
+function formatPhone(val) {
+  if (!val) return '';
+  const digits = val.replace(/[^0-9]/g, '');
+  if (digits.length === 10) return '+1' + digits;
+  if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;
+  return null;
+}
+
 async function savePhone() {
-  let phone = document.getElementById('phone-input').value.trim();
   const msg = document.getElementById('phone-msg');
-  if (!phone) { msg.textContent = 'Please enter a phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
-  const digits = phone.replace(/[^0-9]/g, '');
-  if (digits.length === 10) phone = '+1' + digits;
-  else if (digits.length === 11 && digits.startsWith('1')) phone = '+' + digits;
-  else { msg.textContent = 'Please enter a valid 10-digit US phone number, e.g. 5328883471'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  const raw1 = document.getElementById('phone-input').value.trim();
+  const raw2 = document.getElementById('phone-input-2').value.trim();
+  const raw3 = document.getElementById('phone-input-3').value.trim();
+
+  if (!raw1) { msg.textContent = 'Please enter at least one phone number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+
+  const phone = formatPhone(raw1);
+  if (!phone) { msg.textContent = 'Phone 1 must be a valid 10-digit US number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+
+  let phone2 = '';
+  if (raw2) {
+    phone2 = formatPhone(raw2);
+    if (!phone2) { msg.textContent = 'Phone 2 must be a valid 10-digit US number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  }
+
+  let phone3 = '';
+  if (raw3) {
+    phone3 = formatPhone(raw3);
+    if (!phone3) { msg.textContent = 'Phone 3 must be a valid 10-digit US number'; msg.className = 'msg error'; msg.style.display = 'block'; return; }
+  }
+
   const token = localStorage.getItem('rs_token');
   try {
     const res = await fetch(API + '/api/user/phone', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone })
+      body: JSON.stringify({ phone, phone2, phone3 })
     });
     const data = await res.json();
-    if (res.ok) { msg.textContent = '✓ Phone number saved!'; msg.className = 'msg success'; msg.style.display = 'block'; document.getElementById('profile-phone').textContent = phone; }
-    else { msg.textContent = data.error || 'Failed to save'; msg.className = 'msg error'; msg.style.display = 'block'; }
+    if (res.ok) {
+      msg.textContent = '✓ Phone numbers saved!';
+      msg.className = 'msg success'; msg.style.display = 'block';
+      document.getElementById('profile-phone').textContent = phone + (phone2 ? ', ' + phone2 : '') + (phone3 ? ', ' + phone3 : '');
+      document.getElementById('phone-input').value = phone;
+      if (phone2) document.getElementById('phone-input-2').value = phone2;
+      if (phone3) document.getElementById('phone-input-3').value = phone3;
+    } else { msg.textContent = data.error || 'Failed to save'; msg.className = 'msg error'; msg.style.display = 'block'; }
   } catch (err) { msg.textContent = 'Network error.'; msg.className = 'msg error'; msg.style.display = 'block'; }
 }
 
