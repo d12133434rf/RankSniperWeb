@@ -617,6 +617,10 @@ init();
 loadReviewRequests();
 loadResponseHistory();
 
+let allResponses = [];
+let historyPage = 0;
+const HISTORY_PAGE_SIZE = 10;
+
 async function loadResponseHistory() {
   const token = localStorage.getItem('rs_token');
   const list = document.getElementById('response-history-list');
@@ -625,38 +629,86 @@ async function loadResponseHistory() {
     const res = await fetch('/api/responses', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
     if (!data.length) {
-      list.textContent = 'No responses yet. Generate your first AI response using the Chrome extension!';
+      list.innerHTML = '<p style="font-size:13px;color:var(--muted);">No responses yet. Generate your first AI response using the Chrome extension!</p>';
       return;
     }
+    allResponses = data;
+    historyPage = 0;
     list.innerHTML = '';
-    data.forEach(function(r) {
-      const scoreColor = r.score >= 80 ? '#22c55e' : r.score >= 60 ? '#f59e0b' : '#ef4444';
-      const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
-      const div = document.createElement('div');
-      div.style.cssText = 'padding:14px 0;border-bottom:1px solid var(--border);';
-      div.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-        '<span style="font-weight:600;font-size:13px;">' + (r.reviewer_name || 'Unknown') + (r.business_name ? ' — ' + r.business_name : '') + '</span>' +
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-        (r.score ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:' + scoreColor + '20;color:' + scoreColor + ';border:1px solid ' + scoreColor + '">Score: ' + r.score + '/100</span>' : '') +
-        '<span style="font-size:11px;color:var(--muted)">' + new Date(r.created_at).toLocaleDateString() + '</span>' +
-        '</div></div>' +
-        '<div style="font-size:12px;color:#f59e0b;margin-bottom:6px;">' + stars + '</div>' +
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-style:italic;">"' + (r.review_text || '').substring(0, 100) + (r.review_text && r.review_text.length > 100 ? '...' : '') + '"</div>';
-      const responseDiv = document.createElement('div');
-      responseDiv.style.cssText = 'font-size:13px;color:var(--subtle);background:var(--surface2);border-radius:8px;padding:10px;cursor:pointer;';
-      responseDiv.title = 'Click to copy';
-      responseDiv.textContent = r.response_text || '';
-      responseDiv.addEventListener('click', function() {
-        navigator.clipboard.writeText(this.textContent);
-        this.style.color = '#22c55e';
-        setTimeout(() => this.style.color = '', 1500);
-      });
-      div.appendChild(responseDiv);
-      list.appendChild(div);
+
+    // Summary bar
+    const avgScore = Math.round(data.filter(r => r.score).reduce((a, r) => a + r.score, 0) / (data.filter(r => r.score).length || 1));
+    const summary = document.createElement('div');
+    summary.style.cssText = 'display:flex;gap:16px;margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);';
+    summary.innerHTML =
+      '<div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:800;color:var(--accent);">' + data.length + '</div><div style="font-size:11px;color:var(--muted);">Total responses</div></div>' +
+      '<div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:800;color:#22c55e;">' + avgScore + '</div><div style="font-size:11px;color:var(--muted);">Avg SEO score</div></div>' +
+      '<div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:800;color:#f59e0b;">' + data.filter(r => r.rating <= 2).length + '</div><div style="font-size:11px;color:var(--muted);">Negative handled</div></div>';
+    list.appendChild(summary);
+
+    // Items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.id = 'history-items';
+    list.appendChild(itemsContainer);
+
+    // Load more button
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'load-more-btn';
+    loadMoreBtn.className = 'phone-btn';
+    loadMoreBtn.style.cssText = 'width:100%;margin-top:12px;background:var(--surface2);color:var(--subtle);border:1px solid var(--border);';
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.addEventListener('click', function() {
+      historyPage++;
+      renderHistoryPage();
     });
+    list.appendChild(loadMoreBtn);
+
+    renderHistoryPage();
   } catch (err) {
     list.textContent = 'Could not load history.';
+  }
+}
+
+function renderHistoryPage() {
+  const container = document.getElementById('history-items');
+  if (!container) return;
+  const start = historyPage * HISTORY_PAGE_SIZE;
+  const end = start + HISTORY_PAGE_SIZE;
+  const page = allResponses.slice(start, end);
+
+  page.forEach(function(r) {
+    const scoreColor = r.score >= 80 ? '#22c55e' : r.score >= 60 ? '#f59e0b' : '#ef4444';
+    const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:14px 0;border-bottom:1px solid var(--border);';
+    div.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+      '<span style="font-weight:600;font-size:13px;">' + (r.reviewer_name || 'Unknown') + (r.business_name ? ' — ' + r.business_name : '') + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+      (r.score ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:' + scoreColor + '20;color:' + scoreColor + ';border:1px solid ' + scoreColor + '">Score: ' + r.score + '/100</span>' : '') +
+      '<span style="font-size:11px;color:var(--muted)">' + new Date(r.created_at).toLocaleDateString() + '</span>' +
+      '</div></div>' +
+      '<div style="font-size:12px;color:#f59e0b;margin-bottom:6px;">' + stars + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-style:italic;">"' + (r.review_text || '').substring(0, 100) + ((r.review_text || '').length > 100 ? '...' : '') + '"</div>';
+    const responseDiv = document.createElement('div');
+    responseDiv.style.cssText = 'font-size:13px;color:var(--subtle);background:var(--surface2);border-radius:8px;padding:10px;cursor:pointer;line-height:1.6;';
+    responseDiv.title = 'Click to copy';
+    responseDiv.textContent = r.response_text || '';
+    responseDiv.addEventListener('click', function() {
+      navigator.clipboard.writeText(this.textContent);
+      this.style.color = '#22c55e';
+      setTimeout(() => this.style.color = '', 1500);
+    });
+    div.appendChild(responseDiv);
+    container.appendChild(div);
+  });
+
+  // Hide load more if no more pages
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  if (loadMoreBtn) {
+    const shown = (historyPage + 1) * HISTORY_PAGE_SIZE;
+    loadMoreBtn.style.display = shown >= allResponses.length ? 'none' : 'block';
+    loadMoreBtn.textContent = 'Load More (' + (allResponses.length - shown) + ' remaining)';
   }
 }
 
