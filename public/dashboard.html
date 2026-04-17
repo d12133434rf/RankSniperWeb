@@ -183,6 +183,17 @@
   <div class="section">
     <div class="section-title"><span>⭐</span> Request a Google Review <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
     <p style="font-size:14px;color:var(--subtle);margin-bottom:20px;">Send a customer a text message asking them to leave you a Google review.</p>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">🔍 Find Your Google Review Link</label>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Search your business name to auto-generate your Google review link.</p>
+      <div class="phone-form" style="margin-bottom:8px;">
+        <input type="text" class="phone-input" id="place-search" placeholder="e.g. John's Pizza Peoria AZ" style="flex:1;">
+        <button class="phone-btn" onclick="searchReviewLink()">Find Link</button>
+      </div>
+      <div id="place-results" style="margin-top:8px;"></div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       <div>
         <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:7px;">Customer Name</label>
@@ -217,6 +228,12 @@ Thank you!</textarea>
       <div style="font-size:13px;font-weight:600;color:var(--subtle);margin-bottom:12px;">Recent Requests</div>
       <div id="requests-list" style="font-size:13px;color:var(--muted);">Loading...</div>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><span>📋</span> Response History</div>
+    <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Every AI response you have generated, saved to your account.</p>
+    <div id="response-history-list" style="font-size:13px;color:var(--muted);">Loading...</div>
   </div>
 
   <div class="section">
@@ -598,6 +615,57 @@ async function loadReviewRequests() {
 
 init();
 loadReviewRequests();
+loadResponseHistory();
+
+async function loadResponseHistory() {
+  const token = localStorage.getItem('rs_token');
+  const list = document.getElementById('response-history-list');
+  if (!list) return;
+  try {
+    const res = await fetch('/api/responses', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (!data.length) { list.textContent = 'No responses yet. Generate your first AI response using the Chrome extension!'; return; }
+    const stars = r => '★'.repeat(r) + '☆'.repeat(5 - r);
+    list.innerHTML = data.map(r => {
+      const scoreColor = r.score >= 80 ? '#22c55e' : r.score >= 60 ? '#f59e0b' : '#ef4444';
+      return '<div style="padding:14px 0;border-bottom:1px solid var(--border);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+        '<span style="font-weight:600;font-size:13px;">' + (r.reviewer_name || 'Unknown') + ' — ' + (r.business_name || '') + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        (r.score ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:' + scoreColor + '20;color:' + scoreColor + ';border:1px solid ' + scoreColor + '">Score: ' + r.score + '/100</span>' : '') +
+        '<span style="font-size:11px;color:var(--muted)">' + new Date(r.created_at).toLocaleDateString() + '</span>' +
+        '</div></div>' +
+        '<div style="font-size:12px;color:#f59e0b;margin-bottom:6px;">' + stars(r.rating || 5) + '</div>' +
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-style:italic;">"' + (r.review_text || '').substring(0, 100) + (r.review_text?.length > 100 ? '...' : '') + '"</div>' +
+        '<div style="font-size:13px;color:var(--subtle);background:var(--surface2);border-radius:8px;padding:10px;cursor:pointer;" onclick="navigator.clipboard.writeText(this.dataset.text);this.style.color='#22c55e';setTimeout(()=>this.style.color='',1500)" data-text="' + (r.response_text || '').replace(/"/g, '&quot;') + '" title="Click to copy">' + (r.response_text || '') + '</div>' +
+        '</div>';
+    }).join('');
+  } catch (err) { list.textContent = 'Could not load history.'; }
+}
+
+async function searchReviewLink() {
+  const query = document.getElementById('place-search').value.trim();
+  const results = document.getElementById('place-results');
+  if (!query) return;
+  results.innerHTML = '<span style="font-size:12px;color:var(--muted);">Searching...</span>';
+
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch('/api/responses/place-search?q=' + encodeURIComponent(query), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.place_id) {
+      results.innerHTML = '<span style="font-size:12px;color:#ef4444;">' + (data.error || 'No results found. Try adding your city name.') + '</span>';
+      return;
+    }
+    const reviewUrl = 'https://search.google.com/local/writereview?placeid=' + data.place_id;
+    results.innerHTML = '<div style="font-size:12px;color:var(--subtle);margin-bottom:6px;">Found: <strong style="color:var(--text)">' + data.name + '</strong> — ' + data.address + '</div>' +
+      '<button class="phone-btn" style="padding:8px 16px;font-size:12px;" onclick="document.getElementById('review-link').value='' + reviewUrl + '';document.getElementById('place-results').innerHTML='<span style=\"font-size:12px;color:#22c55e\">✓ Review link added!</span>'">Use This Link</button>';
+  } catch (err) {
+    results.innerHTML = '<span style="font-size:12px;color:#ef4444;">Search failed. Try again.</span>';
+  }
+}
 </script>
 </body>
 </html>
