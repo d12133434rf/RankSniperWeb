@@ -42,6 +42,14 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/responses', responsesRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.0.0' }));
+
+// TEMPORARY TEST ROUTE - remove after testing
+app.get('/api/test-report', async (req, res) => {
+  const secret = req.query.secret;
+  if (secret !== process.env.JWT_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  await sendBiWeeklyReports();
+  res.json({ success: true, message: 'Report sent!' });
+});
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
