@@ -172,12 +172,23 @@
   <div class="section">
     <div class="section-title"><span>📍</span> Google Business Profile <span class="plan-badge pro" style="font-size:10px;margin-left:4px;">Pro</span></div>
     <p style="font-size:14px;color:var(--subtle);margin-bottom:16px;">Connect your Google Business Profile so RankSniper can monitor for new reviews and alert you via SMS.</p>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">🔍 Find Your Business</label>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Search your business name to auto-fill your Google Maps URL.</p>
+      <div class="phone-form" style="margin-bottom:8px;">
+        <input type="text" class="phone-input" id="maps-place-search" placeholder="e.g. John's Pizza Peoria AZ" style="flex:1;">
+        <button class="phone-btn" onclick="searchMapsUrl()">Find</button>
+      </div>
+      <div id="maps-place-results" style="margin-top:8px;"></div>
+    </div>
+
     <label style="font-size:12px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:8px;">Google Maps URL</label>
     <div class="phone-form">
       <input type="url" class="phone-input" id="maps-url-input" placeholder="https://www.google.com/maps/place/Your+Business..." style="flex:1;">
       <button class="phone-btn" onclick="saveMapsUrl()">Save</button>
     </div>
-    <div class="phone-note">Go to Google Maps, search your business, click Share and paste the link here.</div>
+    <div class="phone-note">Or go to Google Maps, search your business, click Share and paste the link here.</div>
     <div class="msg" id="maps-msg"></div>
   </div>
 
@@ -510,6 +521,41 @@ async function startUpgrade(trial) {
     if (data.url) window.location.href = data.url;
     else alert('Failed to open checkout. Please try again.');
   } catch (err) { alert('Failed to open checkout. Please try again.'); }
+}
+
+async function searchMapsUrl() {
+  const query = document.getElementById('maps-place-search').value.trim();
+  const results = document.getElementById('maps-place-results');
+  if (!query) return;
+  results.innerHTML = '<span style="font-size:12px;color:var(--muted);">Searching...</span>';
+  const token = localStorage.getItem('rs_token');
+  try {
+    const res = await fetch('/api/responses/place-search?q=' + encodeURIComponent(query), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.place_id) {
+      results.innerHTML = '<span style="font-size:12px;color:#ef4444;">' + (data.error || 'No results found. Try adding your city name.') + '</span>';
+      return;
+    }
+    const mapsUrl = 'https://www.google.com/maps/place/?q=place_id:' + data.place_id;
+    results.innerHTML = '';
+    const foundDiv = document.createElement('div');
+    foundDiv.style.cssText = 'font-size:12px;color:var(--subtle);margin-bottom:8px;';
+    foundDiv.innerHTML = 'Found: <strong style="color:var(--text)">' + data.name + '</strong> — ' + data.address;
+    const useBtn = document.createElement('button');
+    useBtn.className = 'phone-btn';
+    useBtn.style.cssText = 'padding:8px 16px;font-size:12px;';
+    useBtn.textContent = 'Use This';
+    useBtn.addEventListener('click', function() {
+      document.getElementById('maps-url-input').value = mapsUrl;
+      results.innerHTML = '<span style="font-size:12px;color:#22c55e;">✓ URL filled in! Click Save to confirm.</span>';
+    });
+    results.appendChild(foundDiv);
+    results.appendChild(useBtn);
+  } catch (err) {
+    results.innerHTML = '<span style="font-size:12px;color:#ef4444;">Search failed. Try again.</span>';
+  }
 }
 
 async function saveMapsUrl() {
