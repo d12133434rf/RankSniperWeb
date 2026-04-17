@@ -69,6 +69,37 @@ router.get('/stats', authMiddleware, async (req, res) => {
   }
 });
 
+// DELETE /api/responses/:id - delete a single response
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('review_responses')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id); // ensure user can only delete their own
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete response error:', err);
+    res.status(500).json({ error: 'Failed to delete response' });
+  }
+});
+
+// DELETE /api/responses - delete all responses for current user
+router.delete('/', authMiddleware, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('review_responses')
+      .delete()
+      .eq('user_id', req.user.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete all responses error:', err);
+    res.status(500).json({ error: 'Failed to delete history' });
+  }
+});
+
 // GET /api/responses/place-search - search for a business and return review link
 router.get('/place-search', authMiddleware, async (req, res) => {
   try {
