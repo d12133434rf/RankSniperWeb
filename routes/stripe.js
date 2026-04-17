@@ -134,7 +134,9 @@ router.post('/webhook', async (req, res) => {
 
   if (event.type === 'customer.subscription.updated') {
     const customerId = session.customer;
-    if (customerId && session.cancel_at_period_end === true) {
+    const previousAttributes = event.data.previous_attributes || {};
+    const justCancelled = session.cancel_at_period_end === true && previousAttributes.cancel_at_period_end === false;
+    if (customerId && justCancelled) {
       const { data: user } = await supabase
         .from('users')
         .select('email')
