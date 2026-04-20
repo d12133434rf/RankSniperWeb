@@ -44,11 +44,10 @@
     <li><strong>Payment information:</strong> Processed by Stripe — we never store your card details</li>
     <li><strong>Usage data:</strong> Number of AI responses generated per month</li>
     <li><strong>Contact messages:</strong> Name, email, and message if you contact us</li>
+    <li><strong>Response history:</strong> AI-generated review responses you copy or paste, saved to your account for your own reference</li>
   </ul>
   <p>We do <strong>not</strong> collect or store:</p>
   <ul>
-    <li>Your Google review content (processed locally in your browser)</li>
-    <li>Your Gemini API key (stored locally in Chrome's secure storage)</li>
     <li>Your business profile settings (stored locally in Chrome's secure storage)</li>
     <li>Any browsing history or activity outside of our Service</li>
   </ul>
@@ -58,7 +57,7 @@
     <li>To create and manage your account</li>
     <li>To process payments and manage your subscription</li>
     <li>To send SMS review alerts (if opted in)</li>
-    <li>To send account-related emails (verification, password reset)</li>
+    <li>To send account-related emails (verification, password reset, bi-weekly reports)</li>
     <li>To respond to support requests</li>
     <li>To improve our Service</li>
   </ul>
@@ -70,11 +69,13 @@
     <li><strong>Stripe</strong> — payment processing (subject to Stripe's Privacy Policy)</li>
     <li><strong>Twilio</strong> — SMS delivery for review alerts</li>
     <li><strong>Google Gemini API</strong> — AI response generation (your review text is sent to Google's API when you click "Draft AI Response")</li>
+    <li><strong>Outscraper</strong> — review monitoring for SMS alerts</li>
     <li><strong>Railway</strong> — server hosting</li>
+    <li><strong>Resend</strong> — transactional email delivery</li>
   </ul>
 
   <h2>4. Data Security</h2>
-  <p>We take security seriously. Your password is hashed using bcrypt and never stored in plain text. Your Gemini API key and business profile data are stored locally in your browser and never transmitted to our servers. All data is transmitted over HTTPS.</p>
+  <p>We take security seriously. Your password is hashed using bcrypt and never stored in plain text. Your business profile data is stored locally in your browser. All data is transmitted over HTTPS.</p>
 
   <h2>5. Data Retention</h2>
   <p>We retain your account data for as long as your account is active. If you delete your account, we will delete your personal data within 30 days. Contact messages are retained for 12 months.</p>
