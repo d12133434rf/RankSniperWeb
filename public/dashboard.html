@@ -116,7 +116,7 @@
       <div class="card-value" id="usage-display">0</div>
       <div class="card-sub" id="usage-sub">this month</div>
     </div>
-    <div class="card accent">
+    <div class="card accent" id="status-card">
       <div class="card-label">Status</div>
       <div class="card-value" style="font-size:20px;margin-top:4px;">✅ Active</div>
       <div class="card-sub">Extension ready</div>
@@ -319,7 +319,13 @@ function renderDashboard(user) {
   } else if (isExpired) {
     document.getElementById('plan-display').textContent = 'Expired';
     document.getElementById('plan-display').style.color = '#ef4444';
-    document.getElementById('upgrade-banner').style.display = 'grid';
+    document.getElementById('status-card').innerHTML = '<div class="card-label">Status</div><div class="card-value" style="font-size:20px;margin-top:4px;color:#ef4444;">❌ Inactive</div><div class="card-sub">Subscription expired</div>';
+    const banner = document.getElementById('upgrade-banner');
+    banner.style.display = 'grid';
+    banner.style.gridTemplateColumns = '1fr';
+    banner.style.maxWidth = '400px';
+    const trialCard = document.getElementById('trial-card');
+    if (trialCard) trialCard.style.display = 'none';
   } else {
     document.getElementById('plan-display').textContent = 'No Plan';
     document.getElementById('upgrade-banner').style.display = 'grid';
