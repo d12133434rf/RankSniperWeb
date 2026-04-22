@@ -133,7 +133,7 @@
     <div style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(59,130,246,0.05));border:2px solid rgba(99,102,241,0.5);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;position:relative;">
       <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;">Most Popular</div>
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;">Pro</div>
-      <div style="font-size:13px;color:var(--subtle);">Skip the trial. Full Pro access starting today.</div>
+      <div style="font-size:13px;color:var(--subtle);" id="pro-card-desc">Skip the trial. Full Pro access starting today.</div>
       <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800;">$19 <span style="font-size:13px;font-weight:400;color:var(--muted);">/month</span></div>
       <button class="upgrade-btn" id="pro-btn" onclick="startUpgrade(false)" style="width:100%;margin-top:4px;">Subscribe Now</button>
     </div>
@@ -326,6 +326,8 @@ function renderDashboard(user) {
     banner.style.maxWidth = '400px';
     const trialCard = document.getElementById('trial-card');
     if (trialCard) trialCard.style.display = 'none';
+    const proDesc = document.getElementById('pro-card-desc');
+    if (proDesc) proDesc.textContent = 'Resubscribe to get full Pro access again.';
   } else {
     document.getElementById('plan-display').textContent = 'No Plan';
     document.getElementById('upgrade-banner').style.display = 'grid';
