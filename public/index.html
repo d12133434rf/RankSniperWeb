@@ -211,7 +211,6 @@
   .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .fade-up.visible { opacity: 1; transform: translateY(0); }
 
-  /* Modals */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
   .modal-overlay.active { display: flex; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 40px; max-width: 420px; width: 100%; position: relative; }
@@ -220,7 +219,6 @@
   .modal p { font-size: 14px; color: var(--subtle); margin-bottom: 24px; }
   .modal-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 6px; }
 
-  /* Plan picker modal */
   .plan-picker { max-width: 520px; }
   .plan-picker h3 { text-align: center; margin-bottom: 6px; }
   .plan-picker .subtitle { text-align: center; margin-bottom: 28px; }
@@ -407,11 +405,11 @@
     <div class="fade-up">
       <div class="section-label">How It Works</div>
       <h2 class="section-title">From review to reply<br>in 10 seconds flat.</h2>
-      <p class="section-sub">RankSniper sits directly inside Google Business Profile and Google Search. No switching tabs, no copying prompts.</p>
+      <p class="section-sub">RankSniper sits directly inside Google Business Profile. No switching tabs, no copying prompts.</p>
     </div>
     <div class="steps">
       <div class="step-card fade-up"><div class="step-num">1</div><div class="step-title">Get notified instantly</div><div class="step-desc">The moment a new review comes in, you get a text message via SMS so you never miss one.</div></div>
-      <div class="step-card fade-up"><div class="step-num">2</div><div class="step-title">Click Draft AI Response</div><div class="step-desc">A button appears right next to the Reply button on your Google Business Profile page.</div></div>
+      <div class="step-card fade-up"><div class="step-num">2</div><div class="step-title">Click Draft AI Response</div><div class="step-desc">A button appears right next to the Reply button on your Google Business Profile reviews page.</div></div>
       <div class="step-card fade-up"><div class="step-num">3</div><div class="step-title">Refine if needed</div><div class="step-desc">Use the built-in chat to tweak the response. Say "make it shorter" or "sound more apologetic" and the AI rewrites it instantly.</div></div>
       <div class="step-card fade-up"><div class="step-num">4</div><div class="step-title">Post in one click</div><div class="step-desc">Copy the response and paste it into the Google reply box. Done in seconds.</div></div>
     </div>
@@ -494,7 +492,7 @@
           <li>SEO score on every response</li>
           <li>Refine responses with AI chat</li>
           <li>Custom instructions per profile</li>
-          <li>Works on Google Business Profile & Search</li>
+          <li>Works on Google Business Profile (business.google.com/reviews)</li>
         </ul>
         <button class="pricing-btn outline" onclick="handlePricingClick('trial')">Start Free Trial</button>
       </div>
@@ -511,7 +509,7 @@
           <li>SEO score on every response</li>
           <li>Refine responses with AI chat</li>
           <li>Custom instructions per profile</li>
-          <li>Works on Google Business Profile & Search</li>
+          <li>Works on Google Business Profile (business.google.com/reviews)</li>
           <li><strong style="color:var(--green)">Priority support</strong></li>
         </ul>
         <button class="pricing-btn filled" onclick="handlePricingClick('pro')">Subscribe Now — $19/mo</button>
@@ -531,7 +529,7 @@
       <div class="faq-item"><button class="faq-q">Will the AI responses sound robotic or fake? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper is specifically tuned to avoid AI-sounding phrases. Every response starts with the reviewer's first name, references specific details from their review, and sounds like it came from a real person. You can also refine any response with the built-in chat box.</div></div>
       <div class="faq-item"><button class="faq-q">How does the SMS alert system work? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper uses Twilio to send you a text message the moment a new review appears on your Google Business Profile. The SMS includes the reviewer's name, star rating, and the first part of their review so you know exactly what you're dealing with before you open your computer.</div></div>
       <div class="faq-item"><button class="faq-q">What are "keywords" and why do they matter? <span class="faq-arrow">+</span></button><div class="faq-a">Keywords in review responses are words like your city name, business name, and services. When Google indexes your review replies, it picks up these keywords and uses them to understand what your business does and where it's located — which helps you rank for those terms in local search.</div></div>
-      <div class="faq-item"><button class="faq-q">Does it work on Google Maps? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper works on Google Business Profile (business.google.com) and Google Search results pages. The Draft AI Response button appears wherever your reviews appear on those platforms.</div></div>
+      <div class="faq-item"><button class="faq-q">Does it work on Google Maps? <span class="faq-arrow">+</span></button><div class="faq-a">RankSniper works on Google Business Profile (business.google.com/reviews). The Draft AI Response button appears directly next to each review on that page. We recommend managing all your reviews there for the best experience.</div></div>
       <div class="faq-item"><button class="faq-q">Can I manage multiple business locations? <span class="faq-arrow">+</span></button><div class="faq-a">Yes. With the Pro plan you can create up to 10 separate business profiles, each with their own business name, city, services, tone, and custom instructions. Switch between them instantly from the extension popup.</div></div>
       <div class="faq-item"><button class="faq-q">What is the SEO score? <span class="faq-arrow">+</span></button><div class="faq-a">Every AI-generated response gets scored out of 100 based on factors like length, personalization, keyword inclusion, call to action, and whether it avoids generic AI phrases. A score of 90+ means your response is highly optimized.</div></div>
     </div>
@@ -634,7 +632,6 @@
 const API = '';
 let currentToken = null;
 
-// Check for reset token or auto-redirect logged-in users on page load
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get('reset_token');
@@ -644,7 +641,6 @@ window.addEventListener('load', () => {
     window.history.replaceState({}, '', '/');
     return;
   }
-  // Auto-redirect to dashboard if already logged in
   const token = localStorage.getItem('rs_token');
   if (token) {
     window.location.href = '/dashboard.html';
@@ -652,16 +648,13 @@ window.addEventListener('load', () => {
   }
 });
 
-// Reset password modal
 document.getElementById('reset-submit-btn').addEventListener('click', async () => {
   const password = document.getElementById('reset-password').value;
   const confirm = document.getElementById('reset-password-confirm').value;
   const btn = document.getElementById('reset-submit-btn');
   const msg = document.getElementById('reset-msg');
-
   if (password.length < 6) { msg.textContent = 'Password must be at least 6 characters'; msg.className = 'auth-msg error'; msg.style.display = 'block'; return; }
   if (password !== confirm) { msg.textContent = 'Passwords do not match'; msg.className = 'auth-msg error'; msg.style.display = 'block'; return; }
-
   btn.disabled = true; btn.textContent = 'Resetting...';
   try {
     const res = await fetch(API + '/api/auth/reset-password', {
@@ -695,7 +688,6 @@ document.getElementById('reset-modal').addEventListener('click', (e) => {
   }
 });
 
-// Nav logo — go to dashboard if logged in, otherwise stay on page
 document.getElementById('nav-logo-link').addEventListener('click', (e) => {
   e.preventDefault();
   if (localStorage.getItem('rs_token')) {
@@ -705,7 +697,6 @@ document.getElementById('nav-logo-link').addEventListener('click', (e) => {
   }
 });
 
-// Show plan picker — only if logged in, otherwise scroll to auth
 function handlePricingClick(preference) {
   const token = localStorage.getItem('rs_token');
   if (!token) {
@@ -713,7 +704,6 @@ function handlePricingClick(preference) {
     return;
   }
   currentToken = token;
-  // Reset modal state
   document.getElementById('plan-loading').style.display = 'none';
   document.getElementById('plan-loading').textContent = 'Redirecting to checkout...';
   document.getElementById('btn-trial').disabled = false;
@@ -724,11 +714,9 @@ function handlePricingClick(preference) {
 async function startCheckout(trial) {
   const token = currentToken || localStorage.getItem('rs_token');
   if (!token) return;
-
   document.getElementById('plan-loading').style.display = 'block';
   document.getElementById('btn-trial').disabled = true;
   document.getElementById('btn-pro').disabled = true;
-
   try {
     const res = await fetch('/api/stripe/create-checkout', {
       method: 'POST',
@@ -830,7 +818,6 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
       localStorage.setItem('rs_token', data.token);
       currentToken = data.token;
       if (data.user.plan === 'free' || !data.user.plan) {
-        // Show plan picker modal instead of auto-redirecting
         showMsg('login-msg', '✓ Logged in! Choose your plan below.', 'success');
         setTimeout(() => {
           document.getElementById('plan-modal').classList.add('active');
@@ -839,7 +826,6 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
         showMsg('login-msg', '✓ Logged in! Redirecting...', 'success');
         setTimeout(() => window.location.href = '/dashboard.html', 1500);
       } else {
-        // expired or unknown plan — show plan picker
         showMsg('login-msg', '✓ Logged in! Choose your plan below.', 'success');
         setTimeout(() => {
           document.getElementById('plan-modal').classList.add('active');
