@@ -8,17 +8,14 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Extract Place ID or search query from Google Maps URL
 function extractPlaceQuery(url) {
   try {
-    // Handle place ID format: https://maps.google.com/?cid=... or place/...
     const placeIdMatch = url.match(/place\/([^/]+)\//);
     if (placeIdMatch) {
       return decodeURIComponent(placeIdMatch[1]).replace(/\+/g, ' ');
     }
-    // Handle search query format
     const searchMatch = url.match(/search\/([^/@]+)/);
     if (searchMatch) {
       return decodeURIComponent(searchMatch[1]).replace(/\+/g, ' ');
     }
-    // Handle q= parameter
     const qMatch = url.match(/[?&]q=([^&]+)/);
     if (qMatch) {
       return decodeURIComponent(qMatch[1]).replace(/\+/g, ' ');
@@ -60,13 +57,15 @@ async function sendSMS(to, message) {
   }
 }
 
-// Fetch reviews from Outscraper
+// Fetch reviews from Outscraper — only fetch 3 most recent (cost optimization)
 async function fetchReviews(placeQuery) {
   try {
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     if (!apiKey) throw new Error('OUTSCRAPER_API_KEY not set');
 
-    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=10&language=en&apiKey=${apiKey}`;
+    // reviewsLimit=3 instead of 10 — cuts Outscraper costs by 70%
+    // We only need the most recent reviews to detect new ones
+    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=3&language=en&apiKey=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -85,6 +84,33 @@ async function fetchReviews(placeQuery) {
   }
 }
 
+// Determine if a user should be checked this run based on their activity
+// This runs every 30 min — but not every user needs to be checked every 30 min
+function shouldCheckUser(lastReviewAt) {
+  const now = Date.now();
+
+  if (!lastReviewAt) {
+    // Never had a review — check every 3 hours (they're likely a new/inactive business)
+    return true; // always check on first run, scheduler handles interval
+  }
+
+  const lastReviewMs = new Date(lastReviewAt).getTime();
+  const daysSinceLastReview = (now - lastReviewMs) / (1000 * 60 * 60 * 24);
+
+  if (daysSinceLastReview <= 7) {
+    // Active business — got a review in last 7 days — check every 30 min (every run)
+    return true;
+  } else if (daysSinceLastReview <= 30) {
+    // Semi-active — check every 3 hours (every 6th run)
+    const minuteOfDay = Math.floor((now % (1000 * 60 * 60 * 24)) / (1000 * 60));
+    return minuteOfDay % 180 < 30;
+  } else {
+    // Inactive — no review in 30+ days — check every 12 hours (every 24th run)
+    const minuteOfDay = Math.floor((now % (1000 * 60 * 60 * 24)) / (1000 * 60));
+    return minuteOfDay % 720 < 30;
+  }
+}
+
 // Main polling function - called every 30 minutes by the scheduler
 async function checkAllUsersForNewReviews() {
   console.log('[ReviewMonitor] Starting review check for all pro users...');
@@ -93,7 +119,7 @@ async function checkAllUsersForNewReviews() {
     // Get all pro users with a phone number and google maps URL
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, email, phone, phone2, phone3, google_maps_url, business_name')
+      .select('id, email, phone, phone2, phone3, google_maps_url, business_name, last_review_at')
       .eq('plan', 'pro')
       .not('phone', 'is', null)
       .not('google_maps_url', 'is', null)
@@ -106,10 +132,21 @@ async function checkAllUsersForNewReviews() {
       return;
     }
 
-    console.log(`[ReviewMonitor] Checking ${users.length} users`);
+    console.log(`[ReviewMonitor] ${users.length} total users — applying adaptive polling filter`);
+
+    let checked = 0;
+    let skipped = 0;
 
     for (const user of users) {
       try {
+        // Adaptive polling — skip users who don't need to be checked this run
+        if (!shouldCheckUser(user.last_review_at)) {
+          skipped++;
+          continue;
+        }
+
+        checked++;
+
         const placeQuery = extractPlaceQuery(user.google_maps_url);
         if (!placeQuery) {
           console.log(`[ReviewMonitor] Could not extract place query for user ${user.id}`);
@@ -137,7 +174,13 @@ async function checkAllUsersForNewReviews() {
 
         console.log(`[ReviewMonitor] Found ${newReviews.length} new reviews for user ${user.email}`);
 
-        // Save new reviews to database
+        // Save new reviews and reset last_review_at to NOW
+        // This resets them to active polling (every 30 min) even if they were inactive
+        await supabase
+          .from('users')
+          .update({ last_review_at: new Date().toISOString() })
+          .eq('id', user.id);
+
         for (const review of newReviews) {
           await supabase.from('monitored_reviews').upsert({
             user_id: user.id,
@@ -166,13 +209,13 @@ async function checkAllUsersForNewReviews() {
       }
     }
 
-    console.log('[ReviewMonitor] Review check complete');
+    console.log(`[ReviewMonitor] Done — checked ${checked}, skipped ${skipped} (adaptive polling)`);
   } catch (err) {
     console.error('[ReviewMonitor] Fatal error:', err.message);
   }
 }
 
-// POST /api/reviews/save-maps-url - save Google Maps URL
+// POST /api/reviews/save-maps-url
 router.post('/save-maps-url', authMiddleware, async (req, res) => {
   try {
     const { google_maps_url } = req.body;
@@ -189,7 +232,7 @@ router.post('/save-maps-url', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/reviews/maps-url - get saved Google Maps URL
+// GET /api/reviews/maps-url
 router.get('/maps-url', authMiddleware, async (req, res) => {
   try {
     const { data: user } = await supabase
@@ -203,7 +246,7 @@ router.get('/maps-url', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/reviews/recent - get recent reviews for dashboard
+// GET /api/reviews/recent
 router.get('/recent', authMiddleware, async (req, res) => {
   try {
     const { data: reviews } = await supabase
