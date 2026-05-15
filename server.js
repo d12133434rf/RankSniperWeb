@@ -9,15 +9,14 @@ const contactRoutes = require('./routes/contact');
 const smsRoutes = require('./routes/sms');
 const { router: reviewRoutes, checkAllUsersForNewReviews } = require('./routes/reviews');
 const responsesRoutes = require('./routes/responses');
+const generateRoutes = require('./routes/generate');
 
 const app = express();
 
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    // Allow getranksniper.com and Chrome extensions
     if (
       origin === process.env.FRONTEND_URL ||
       origin === 'https://getranksniper.com' ||
@@ -26,7 +25,7 @@ app.use(cors({
     ) {
       return callback(null, true);
     }
-    return callback(null, true); // Allow all for now
+    return callback(null, true);
   },
   credentials: true
 }));
@@ -40,9 +39,9 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/sms', smsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/responses', responsesRoutes);
+app.use('/api/generate', generateRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', version: '1.0.0' }));
-
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -102,7 +101,7 @@ async function sendBiWeeklyReports() {
           '<p style="color:#9ca3af;font-size:12px;">You are receiving this as a RankSniper Pro member. Questions? Email contactranksniper@gmail.com</p>' +
           '</div>';
 
-                await fetch('https://api.resend.com/emails', {
+        await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.RESEND_API_KEY },
           body: JSON.stringify({
