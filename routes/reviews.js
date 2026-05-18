@@ -8,18 +8,34 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Extract Place ID or search query from Google Maps URL
 function extractPlaceQuery(url) {
   try {
-    const placeIdMatch = url.match(/place\/([^/]+)\//);
+    // Handle /place/ format: https://www.google.com/maps/place/Business+Name/@lat,lng,...
+    const placeIdMatch = url.match(/place\/([^/@]+)/);
     if (placeIdMatch) {
-      return decodeURIComponent(placeIdMatch[1]).replace(/\+/g, ' ');
+      const decoded = decodeURIComponent(placeIdMatch[1]).replace(/\+/g, ' ');
+      console.log('[ReviewMonitor] Extracted place name:', decoded);
+      return decoded;
     }
+    // Handle search format
     const searchMatch = url.match(/search\/([^/@]+)/);
     if (searchMatch) {
-      return decodeURIComponent(searchMatch[1]).replace(/\+/g, ' ');
+      const decoded = decodeURIComponent(searchMatch[1]).replace(/\+/g, ' ');
+      console.log('[ReviewMonitor] Extracted search query:', decoded);
+      return decoded;
     }
+    // Handle q= parameter
     const qMatch = url.match(/[?&]q=([^&]+)/);
     if (qMatch) {
-      return decodeURIComponent(qMatch[1]).replace(/\+/g, ' ');
+      const decoded = decodeURIComponent(qMatch[1]).replace(/\+/g, ' ');
+      console.log('[ReviewMonitor] Extracted q param:', decoded);
+      return decoded;
     }
+    // Handle CID format: https://maps.google.com/?cid=...
+    const cidMatch = url.match(/[?&]cid=([^&]+)/);
+    if (cidMatch) {
+      console.log('[ReviewMonitor] Extracted CID:', cidMatch[1]);
+      return cidMatch[1];
+    }
+    console.log('[ReviewMonitor] Could not extract place query from URL:', url);
     return null;
   } catch (e) {
     return null;
@@ -38,18 +54,32 @@ async function sendSMS(to, message) {
       return false;
     }
 
+    // Format to E.164
+    let formattedTo = to.replace(/[^0-9+]/g, '');
+    if (!formattedTo.startsWith('+')) {
+      const digits = formattedTo.replace(/[^0-9]/g, '');
+      if (digits.length === 10) formattedTo = '+1' + digits;
+      else if (digits.length === 11 && digits.startsWith('1')) formattedTo = '+' + digits;
+      else formattedTo = '+1' + digits;
+    }
+
+    console.log('[ReviewMonitor] Sending SMS to:', formattedTo);
+
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
       method: 'POST',
       headers: {
         'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: new URLSearchParams({ To: to, From: from, Body: message }).toString()
+      body: new URLSearchParams({ To: formattedTo, From: from, Body: message }).toString()
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(JSON.stringify(data));
-    console.log('SMS sent to:', to);
+    if (!res.ok) {
+      console.error('[ReviewMonitor] Twilio error:', JSON.stringify(data));
+      throw new Error(JSON.stringify(data));
+    }
+    console.log('[ReviewMonitor] SMS sent successfully to:', formattedTo);
     return true;
   } catch (e) {
     console.error('SMS send error:', e.message);
@@ -57,21 +87,25 @@ async function sendSMS(to, message) {
   }
 }
 
-// Fetch reviews from Outscraper — only fetch 3 most recent (cost optimization)
+// Fetch reviews from Outscraper
 async function fetchReviews(placeQuery) {
   try {
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     if (!apiKey) throw new Error('OUTSCRAPER_API_KEY not set');
 
-    // reviewsLimit=3 instead of 10 — cuts Outscraper costs by 70%
-    // We only need the most recent reviews to detect new ones
     const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=3&language=en&apiKey=${apiKey}`;
+    console.log('[ReviewMonitor] Outscraper request for:', placeQuery);
+
     const res = await fetch(url);
     const data = await res.json();
+
+    console.log('[ReviewMonitor] Outscraper status:', res.status);
 
     if (!res.ok) throw new Error(JSON.stringify(data));
 
     const reviews = data?.data?.[0]?.reviews_data || [];
+    console.log('[ReviewMonitor] Reviews returned by Outscraper:', reviews.length);
+
     return reviews.map(r => ({
       review_id: r.review_id || r.review_link || `${r.reviewer_name}-${r.review_datetime_utc}`,
       reviewer_name: r.reviewer_name || 'Someone',
@@ -85,27 +119,22 @@ async function fetchReviews(placeQuery) {
 }
 
 // Determine if a user should be checked this run based on their activity
-// This runs every 30 min — but not every user needs to be checked every 30 min
 function shouldCheckUser(lastReviewAt) {
   const now = Date.now();
 
   if (!lastReviewAt) {
-    // Never had a review — check every 3 hours (they're likely a new/inactive business)
-    return true; // always check on first run, scheduler handles interval
+    return true;
   }
 
   const lastReviewMs = new Date(lastReviewAt).getTime();
   const daysSinceLastReview = (now - lastReviewMs) / (1000 * 60 * 60 * 24);
 
   if (daysSinceLastReview <= 7) {
-    // Active business — got a review in last 7 days — check every 30 min (every run)
     return true;
   } else if (daysSinceLastReview <= 30) {
-    // Semi-active — check every 3 hours (every 6th run)
     const minuteOfDay = Math.floor((now % (1000 * 60 * 60 * 24)) / (1000 * 60));
     return minuteOfDay % 180 < 30;
   } else {
-    // Inactive — no review in 30+ days — check every 12 hours (every 24th run)
     const minuteOfDay = Math.floor((now % (1000 * 60 * 60 * 24)) / (1000 * 60));
     return minuteOfDay % 720 < 30;
   }
@@ -116,7 +145,6 @@ async function checkAllUsersForNewReviews() {
   console.log('[ReviewMonitor] Starting review check for all pro users...');
 
   try {
-    // Get all pro users with a phone number and google maps URL
     const { data: users, error } = await supabase
       .from('users')
       .select('id, email, phone, phone2, phone3, google_maps_url, business_name, last_review_at')
@@ -139,32 +167,32 @@ async function checkAllUsersForNewReviews() {
 
     for (const user of users) {
       try {
-        // Adaptive polling — skip users who don't need to be checked this run
         if (!shouldCheckUser(user.last_review_at)) {
           skipped++;
           continue;
         }
 
         checked++;
+        console.log(`[ReviewMonitor] Checking user: ${user.email} | Maps URL: ${user.google_maps_url}`);
 
         const placeQuery = extractPlaceQuery(user.google_maps_url);
         if (!placeQuery) {
-          console.log(`[ReviewMonitor] Could not extract place query for user ${user.id}`);
+          console.log(`[ReviewMonitor] Could not extract place query for user ${user.id} from URL: ${user.google_maps_url}`);
           continue;
         }
 
         const reviews = await fetchReviews(placeQuery);
-        if (reviews.length === 0) continue;
+        if (reviews.length === 0) {
+          console.log(`[ReviewMonitor] No reviews returned from Outscraper for: ${placeQuery}`);
+          continue;
+        }
 
-        // Get reviews we've already seen for this user
         const { data: seenReviews } = await supabase
           .from('monitored_reviews')
           .select('review_id')
           .eq('user_id', user.id);
 
         const seenIds = new Set((seenReviews || []).map(r => r.review_id));
-
-        // Find new reviews
         const newReviews = reviews.filter(r => !seenIds.has(r.review_id));
 
         if (newReviews.length === 0) {
@@ -174,8 +202,6 @@ async function checkAllUsersForNewReviews() {
 
         console.log(`[ReviewMonitor] Found ${newReviews.length} new reviews for user ${user.email}`);
 
-        // Save new reviews and reset last_review_at to NOW
-        // This resets them to active polling (every 30 min) even if they were inactive
         await supabase
           .from('users')
           .update({ last_review_at: new Date().toISOString() })
@@ -191,7 +217,6 @@ async function checkAllUsersForNewReviews() {
             created_at: new Date().toISOString()
           }, { onConflict: 'user_id,review_id' });
 
-          // Send SMS alert
           const stars = '⭐'.repeat(Math.min(review.rating, 5));
           const preview = review.review_text
             ? review.review_text.substring(0, 80) + (review.review_text.length > 80 ? '...' : '')
