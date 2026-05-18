@@ -8,32 +8,40 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // Extract Place ID or search query from Google Maps URL
 function extractPlaceQuery(url) {
   try {
-    // Handle /place/ format: https://www.google.com/maps/place/Business+Name/@lat,lng,...
-    const placeIdMatch = url.match(/place\/([^/@]+)/);
-    if (placeIdMatch) {
-      const decoded = decodeURIComponent(placeIdMatch[1]).replace(/\+/g, ' ');
-      console.log('[ReviewMonitor] Extracted place name:', decoded);
-      return decoded;
-    }
-    // Handle search format
-    const searchMatch = url.match(/search\/([^/@]+)/);
-    if (searchMatch) {
-      const decoded = decodeURIComponent(searchMatch[1]).replace(/\+/g, ' ');
-      console.log('[ReviewMonitor] Extracted search query:', decoded);
-      return decoded;
-    }
-    // Handle q= parameter
-    const qMatch = url.match(/[?&]q=([^&]+)/);
-    if (qMatch) {
-      const decoded = decodeURIComponent(qMatch[1]).replace(/\+/g, ' ');
-      console.log('[ReviewMonitor] Extracted q param:', decoded);
-      return decoded;
+    // Handle place_id format: ?q=place_id:ChIJ... or place_id:ChIJ in URL
+    const placeIdDirectMatch = url.match(/place_id:([A-Za-z0-9_-]+)/);
+    if (placeIdDirectMatch) {
+      console.log('[ReviewMonitor] Extracted place_id:', placeIdDirectMatch[1]);
+      return placeIdDirectMatch[1];
     }
     // Handle CID format: https://maps.google.com/?cid=...
     const cidMatch = url.match(/[?&]cid=([^&]+)/);
     if (cidMatch) {
       console.log('[ReviewMonitor] Extracted CID:', cidMatch[1]);
       return cidMatch[1];
+    }
+    // Handle /place/BusinessName/ format
+    const placeNameMatch = url.match(/place\/([^/@?]+)/);
+    if (placeNameMatch) {
+      const decoded = decodeURIComponent(placeNameMatch[1]).replace(/\+/g, ' ').trim();
+      if (decoded && !decoded.startsWith('?')) {
+        console.log('[ReviewMonitor] Extracted place name:', decoded);
+        return decoded;
+      }
+    }
+    // Handle search format
+    const searchMatch = url.match(/search\/([^/@?]+)/);
+    if (searchMatch) {
+      const decoded = decodeURIComponent(searchMatch[1]).replace(/\+/g, ' ');
+      console.log('[ReviewMonitor] Extracted search query:', decoded);
+      return decoded;
+    }
+    // Handle q= parameter (non place_id)
+    const qMatch = url.match(/[?&]q=([^&]+)/);
+    if (qMatch) {
+      const decoded = decodeURIComponent(qMatch[1]).replace(/\+/g, ' ');
+      console.log('[ReviewMonitor] Extracted q param:', decoded);
+      return decoded;
     }
     console.log('[ReviewMonitor] Could not extract place query from URL:', url);
     return null;
