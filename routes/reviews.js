@@ -95,19 +95,63 @@ async function sendSMS(to, message) {
   }
 }
 
-// Fetch reviews from Outscraper
+// Fetch reviews from Outscraper — handles async 202 responses
 async function fetchReviews(placeQuery) {
   try {
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     if (!apiKey) throw new Error('OUTSCRAPER_API_KEY not set');
 
-    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=3&language=en&apiKey=${apiKey}`;
+    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=3&language=en&async=false&apiKey=${apiKey}`;
     console.log('[ReviewMonitor] Outscraper request for:', placeQuery);
 
     const res = await fetch(url);
     const data = await res.json();
 
     console.log('[ReviewMonitor] Outscraper status:', res.status);
+
+    // Handle async 202 — poll results URL until done
+    if (res.status === 202) {
+      const resultsUrl = data?.resultsUrl || data?.id;
+      if (!resultsUrl) {
+        console.log('[ReviewMonitor] Outscraper 202 but no resultsUrl, skipping');
+        return [];
+      }
+
+      console.log('[ReviewMonitor] Outscraper async job, polling results...');
+
+      // Poll up to 10 times with 3 second intervals (30 seconds total)
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+
+        const pollUrl = resultsUrl.startsWith('http')
+          ? resultsUrl + (resultsUrl.includes('?') ? '&' : '?') + `apiKey=${apiKey}`
+          : `https://api.app.outscraper.com/requests/${resultsUrl}?apiKey=${apiKey}`;
+
+        const pollRes = await fetch(pollUrl);
+        const pollData = await pollRes.json();
+
+        console.log('[ReviewMonitor] Poll attempt', i + 1, '| status:', pollData?.status);
+
+        if (pollData?.status === 'Success' || pollData?.data) {
+          const reviews = pollData?.data?.[0]?.reviews_data || [];
+          console.log('[ReviewMonitor] Reviews returned by Outscraper:', reviews.length);
+          return reviews.map(r => ({
+            review_id: r.review_id || r.review_link || `${r.reviewer_name}-${r.review_datetime_utc}`,
+            reviewer_name: r.reviewer_name || 'Someone',
+            rating: r.review_rating || 0,
+            review_text: r.review_text || ''
+          }));
+        }
+
+        if (pollData?.status === 'Failed') {
+          console.error('[ReviewMonitor] Outscraper job failed');
+          return [];
+        }
+      }
+
+      console.log('[ReviewMonitor] Outscraper timed out after polling');
+      return [];
+    }
 
     if (!res.ok) throw new Error(JSON.stringify(data));
 
