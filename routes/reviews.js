@@ -101,7 +101,7 @@ async function fetchReviews(placeQuery) {
     const apiKey = process.env.OUTSCRAPER_API_KEY;
     if (!apiKey) throw new Error('OUTSCRAPER_API_KEY not set');
 
-    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=3&language=en&async=false&apiKey=${apiKey}`;
+    const url = `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(placeQuery)}&reviewsLimit=1&language=en&async=false&apiKey=${apiKey}`;
     console.log('[ReviewMonitor] Outscraper request for:', placeQuery);
 
     const res = await fetch(url);
