@@ -18,7 +18,7 @@ router.post('/', authMiddleware, async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 350, temperature: 0.95, topP: 0.95 }
+        generationConfig: { maxOutputTokens: 700, temperature: 0.95, topP: 0.95 }
       })
     });
 
