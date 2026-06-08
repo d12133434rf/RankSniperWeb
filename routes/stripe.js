@@ -115,7 +115,7 @@ router.post('/webhook', async (req, res) => {
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Go to Dashboard
             </a>
-            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactranksniper@gmail.com</p>
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactgetranksniper@gmail.com</p>
             <p style="color:#6b7280;font-size:14px;">— The RankSniper Team</p>
           </div>
           `
@@ -157,7 +157,7 @@ router.post('/webhook', async (req, res) => {
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Resubscribe
             </a>
-            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactranksniper@gmail.com</p>
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactgetranksniper@gmail.com</p>
             <p style="color:#6b7280;font-size:14px;">— The RankSniper Team</p>
           </div>
           `
@@ -192,7 +192,7 @@ router.post('/webhook', async (req, res) => {
                style="display:inline-block;background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:16px;">
               Resubscribe
             </a>
-            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactranksniper@gmail.com</p>
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">Questions? Contact us at contactgetranksniper@gmail.com</p>
             <p style="color:#6b7280;font-size:14px;">— The RankSniper Team</p>
           </div>
           `

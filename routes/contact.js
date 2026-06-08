@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
         },
         body: JSON.stringify({
           from: 'RankSniper Contact <no-reply@getranksniper.com>',
-          to: 'contactranksniper@gmail.com',
+          to: 'contactgetranksniper@gmail.com',
           reply_to: email,
           subject: `New Contact Message from ${name}`,
           html: `

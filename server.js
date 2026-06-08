@@ -98,7 +98,7 @@ async function sendBiWeeklyReports() {
           '<p style="color:#374151;font-size:15px;line-height:1.6;margin-bottom:24px;">You responded to <strong>' + positive + ' positive</strong> and <strong>' + negative + ' negative</strong> reviews this period. Consistent responses help you rank higher on Google Maps.</p>' +
           '<a href="' + dashUrl + '" style="display:inline-block;background:#3b82f6;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">View Dashboard</a>' +
           '<hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0;">' +
-          '<p style="color:#9ca3af;font-size:12px;">You are receiving this as a RankSniper Pro member. Questions? Email contactranksniper@gmail.com</p>' +
+          '<p style="color:#9ca3af;font-size:12px;">You are receiving this as a RankSniper Pro member. Questions? Email contactgetranksniper@gmail.com</p>' +
           '</div>';
 
         await fetch('https://api.resend.com/emails', {
