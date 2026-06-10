@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://getranksniper.com/sitemap.xml
